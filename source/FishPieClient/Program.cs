@@ -1,3 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-Console.WriteLine("Hello, World!");
+using FishPieShooter.Utils;
+
+Log.Init();
+
+Log.CoreWarn("Initialized Log!");
+Log.ClientDebug("Hello!");
