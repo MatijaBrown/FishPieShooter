@@ -10,6 +10,14 @@ using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient;
 
+public struct IndirectCommand(uint count, uint instanceCount, uint first, uint baseInstance)
+{
+    public uint Count = count;
+    public uint InstanceCount = instanceCount;
+    public uint First = first;
+    public uint BaseInstance = baseInstance;
+}
+
 public static class Program
 {
 
@@ -18,7 +26,7 @@ public static class Program
 
     private static GL? _gl;
     
-    private static void Main(string[] args)
+    private static unsafe void Main(string[] args)
     {
         Logging.InitLogger();
         
@@ -38,18 +46,29 @@ public static class Program
 
         Span<VertexData> triangle =
         [
-            new VertexData(0.0f, 0.5f, 0.0f),
-            new VertexData(-0.5f, -0.5f, 0.0f),
-            new VertexData(0.5f, -0.5f, 0.0f)
+            new (0.0f, 0.5f, 0.0f),
+            new (-0.5f, -0.5f, 0.0f),
+            new (0.5f, -0.5f, 0.0f)
         ];
 
         var triangleBuffer = new Buffer<VertexData>((uint)triangle.Length, _gl);
         triangleBuffer.Write(triangle, 0);
 
+        var commandBuffer = new Buffer<IndirectCommand>(1, _gl);
+        var command = new IndirectCommand(
+            count: 3,
+            instanceCount: 1,
+            first: 0,
+            baseInstance: 0
+        );
+        Span<IndirectCommand> commandView = [command];
+        commandBuffer.Write(commandView, 0);
+
         uint dummyVao = _gl.GenVertexArray();
         
         _gl.BindVertexArray(dummyVao);
         _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Handle);
+        _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
         sampleProg.Use();
         
         while (_running)
@@ -58,14 +77,15 @@ public static class Program
             
             _window.PumpEvent();
 
-            _gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 1, 0);
             
             _window.Swap();
         }
 
         _gl.BindVertexArray(0);
         _gl.DeleteVertexArray(dummyVao);
-        
+
+        commandBuffer.Dispose();
         triangleBuffer.Dispose();
         sampleProg.Dispose();
 
