@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishPieClient", "source\Fis
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{445D4C19-0576-4A5F-96BB-80577AF1D83F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTest", "tests\TestTest\TestTest.csproj", "{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssertsTests", "tests\AssertsTests\AssertsTests.csproj", "{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

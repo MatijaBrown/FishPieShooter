@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <RootNamespace>TestTest</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,6 +19,10 @@
 
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\source\FishPieClient\FishPieClient.csproj" />
     </ItemGroup>
 
 </Project>
