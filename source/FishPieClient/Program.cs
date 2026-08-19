@@ -3,8 +3,8 @@
 using FishPieClient.Graphics.Display;
 using FishPieClient.Utils;
 using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
 using Silk.NET.OpenGL;
+using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient;
 
@@ -25,11 +25,11 @@ public static class Program
 
         _window = new Window(WindowMode.Windowed, 1920, 1080, 1920, 0);
         _window.OnClose += () => { _running = false; };
-        _window.OnKeyboard += (key, state) => Log.Debug("KeyEvent {Key} {State}", key, state);
-        _window.OnMouseButton += (x, y, state) => Log.Debug("MouseButton {X} {Y} {State}", x, y, state);
-        _window.OnMouseMove += (dx, dy) => Log.Debug("MouseMove {DeltaX} {DeltaY}", dx, dy);
         
         _gl = _window.Gl;
+
+        var shader = new Shader("simple.vert", Shader.Type.Vertex, "Simple Vertex Shader", _gl);
+        shader.Dispose();
         
         while (_running)
         {

@@ -27,4 +27,13 @@
       <PackageReference Include="System.Configuration.ConfigurationManager" Version="11.0.0-preview.7.26381.103" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Assets\Shaders\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Assets\Shaders\simple.vert.glsl" />
+      <EmbeddedResource Include="Assets\Shaders\simple.vert.glsl" />
+    </ItemGroup>
+
 </Project>
