@@ -92,7 +92,8 @@ public sealed class Window : IGLContextSource, IDisposable
             Log.Fatal("Failed to init glfw");
             throw new Exception("Failed to init glfw");
         }
-        
+
+        _glfw.WindowHint(WindowHintBool.Resizable, false);
         _glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
         _glfw.WindowHint(WindowHintInt.RedBits, 32);
         _glfw.WindowHint(WindowHintInt.GreenBits, 32);
@@ -138,7 +139,19 @@ public sealed class Window : IGLContextSource, IDisposable
         Gl.Enable(EnableCap.Multisample);
         Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
-        Log.Information("Created new window {Width} {Height} {WindowMode}", _width, _height, _mode);
+        SetMode(mode);
+
+        string? vendor = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Vendor));
+        string? renderer = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Renderer));
+        string? version = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Version));
+        
+        Log.Information("Created new window {Width} {Height} {WindowMode} {Vendor} {Renderer} {Version}",
+            _width,
+            _height,
+            _mode,
+            vendor ?? "(unavailable)",
+            renderer ?? "(unavailable)",
+            version ?? "(unavailable)");
     }
 
     private unsafe void SetupEventCallbacks()
@@ -206,26 +219,25 @@ public sealed class Window : IGLContextSource, IDisposable
 
     private unsafe void SetMode(WindowMode mode)
     {
-        _mode = mode;
-
         WindowHandle* handle = (WindowHandle*)NativeHandle;
         
         Monitor* monitor;
         VideoMode* videoMode;
-        if (_mode == WindowMode.Windowed)
+        if (_mode == WindowMode.Fullscreen && mode == WindowMode.Windowed)
         {
             monitor = _glfw.GetWindowMonitor(handle);
             videoMode = _glfw.GetVideoMode(monitor);
             _glfw.SetWindowMonitor(handle, null, (int)(videoMode->Width + _width) / 2,
                 (int)(videoMode->Height + _height) / 2,  (int)_width, (int)_height,videoMode->RefreshRate);
         }
-        else if (_mode == WindowMode.Fullscreen)
+        else if (_mode == WindowMode.Windowed && mode == WindowMode.Fullscreen)
         {
             monitor = _glfw.GetPrimaryMonitor();
             videoMode = _glfw.GetVideoMode(monitor);
             _glfw.SetWindowMonitor(handle, monitor, 0, 0, videoMode->Width, videoMode->Height,
                 videoMode->RefreshRate);
         }
+        _mode = mode;
     }
 
     public unsafe void Dispose()

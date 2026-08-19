@@ -3,7 +3,7 @@ using Serilog;
 
 namespace FishPieClient.Utils;
 
-public static class Asserts
+public static class Errors
 {
 
     public static void Expect(bool predicate, string msg, params object[] args)
