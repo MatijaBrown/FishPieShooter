@@ -4,6 +4,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "source", "source", "{B45BBE
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FishPieClient", "source\FishPieClient\FishPieClient.csproj", "{6EB0BC08-141E-4008-B45D-F62765995E42}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{445D4C19-0576-4A5F-96BB-80577AF1D83F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTest", "tests\TestTest\TestTest.csproj", "{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x64 = Release|x64
@@ -14,8 +18,13 @@ Global
 		{6EB0BC08-141E-4008-B45D-F62765995E42}.Release|x64.Build.0 = Release|x64
 		{6EB0BC08-141E-4008-B45D-F62765995E42}.Debug|x64.ActiveCfg = Debug|x64
 		{6EB0BC08-141E-4008-B45D-F62765995E42}.Debug|x64.Build.0 = Debug|x64
+		{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}.Release|x64.ActiveCfg = Release|Any CPU
+		{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}.Release|x64.Build.0 = Release|Any CPU
+		{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373}.Debug|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6EB0BC08-141E-4008-B45D-F62765995E42} = {B45BBEB4-EE04-402D-A360-C2E0F8E477D3}
+		{C1151F03-3CEA-4CCB-BCDD-FD5DEDDCD373} = {445D4C19-0576-4A5F-96BB-80577AF1D83F}
 	EndGlobalSection
 EndGlobal
