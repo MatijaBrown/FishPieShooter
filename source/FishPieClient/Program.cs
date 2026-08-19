@@ -1,6 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
+using FishPieClient.Graphics.Shaders;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
@@ -14,7 +16,7 @@ public static class Program
     private static Window? _window;
     private static bool _running = true;
 
-    private static GL _gl;
+    private static GL? _gl;
     
     private static void Main(string[] args)
     {
@@ -28,8 +30,27 @@ public static class Program
         
         _gl = _window.Gl;
 
-        var shader = new Shader("simple.vert", Shader.Type.Vertex, "Simple Vertex Shader", _gl);
-        shader.Dispose();
+        var sampleVert = new Shader("sample.vert", Shader.Type.Vertex, "sample_vertex_shader", _gl);
+        var sampleFrag = new Shader("sample.frag", Shader.Type.Fragment, "sample_fragment_shader", _gl);
+        var sampleProg = new ShaderProgram(sampleVert, sampleFrag, "sample_prog", _gl);
+        sampleVert.Dispose();
+        sampleFrag.Dispose();
+
+        Span<VertexData> triangle =
+        [
+            new VertexData(0.0f, 0.5f, 0.0f),
+            new VertexData(-0.5f, -0.5f, 0.0f),
+            new VertexData(0.5f, -0.5f, 0.0f)
+        ];
+
+        var triangleBuffer = new Buffer<VertexData>((uint)triangle.Length, _gl);
+        triangleBuffer.Write(triangle, 0);
+
+        uint dummyVao = _gl.GenVertexArray();
+        
+        _gl.BindVertexArray(dummyVao);
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Handle);
+        sampleProg.Use();
         
         while (_running)
         {
@@ -37,8 +58,16 @@ public static class Program
             
             _window.PumpEvent();
 
+            _gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            
             _window.Swap();
         }
+
+        _gl.BindVertexArray(0);
+        _gl.DeleteVertexArray(dummyVao);
+        
+        triangleBuffer.Dispose();
+        sampleProg.Dispose();
 
         _window.Dispose();
     }

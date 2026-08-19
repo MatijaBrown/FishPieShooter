@@ -33,7 +33,13 @@
 
     <ItemGroup>
       <None Remove="Assets\Shaders\simple.vert.glsl" />
-      <EmbeddedResource Include="Assets\Shaders\simple.vert.glsl" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Assets\Shaders\sample.vert.glsl" />
+      <EmbeddedResource Include="Assets\Shaders\sample.vert.glsl" />
+      <None Remove="Assets\Shaders\sample.frag.glsl" />
+      <EmbeddedResource Include="Assets\Shaders\sample.frag.glsl" />
     </ItemGroup>
 
 </Project>
