@@ -92,7 +92,8 @@ public sealed class Window : IGLContextSource, IDisposable
             Log.Fatal("Failed to init glfw");
             throw new Exception("Failed to init glfw");
         }
-        
+
+        _glfw.WindowHint(WindowHintBool.Resizable, false);
         _glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
         _glfw.WindowHint(WindowHintInt.RedBits, 32);
         _glfw.WindowHint(WindowHintInt.GreenBits, 32);

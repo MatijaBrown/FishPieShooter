@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Numerics;
 using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Shaders;
@@ -46,9 +47,9 @@ public static class Program
 
         Span<VertexData> triangle =
         [
-            new (0.0f, 0.5f, 0.0f),
-            new (-0.5f, -0.5f, 0.0f),
-            new (0.5f, -0.5f, 0.0f)
+            new(new Vector3(0.0f, 0.5f, 0.0f), Colour.Azure),
+            new(new Vector3(-0.5f, -0.5f, 0.0f), new Colour(0.6f, 0.1f, 0.0f)),
+            new(new Vector3(0.5f, -0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f))
         ];
 
         var triangleBuffer = new Buffer<VertexData>((uint)triangle.Length, _gl);
@@ -70,6 +71,9 @@ public static class Program
         _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Handle);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
         sampleProg.Use();
+
+        var r1 = 0.0f;
+        var r2 = 1.0f;
         
         while (_running)
         {
@@ -77,6 +81,14 @@ public static class Program
             
             _window.PumpEvent();
 
+            triangle[0].Colour.R += 0.01f;
+            if (triangle[0].Colour.R >= 1.0f)
+            {
+                triangle[0].Colour.R = 0.0f;
+            }
+
+            triangleBuffer.Write(triangle, 0);
+            
             _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 1, 0);
             
             _window.Swap();
