@@ -2,6 +2,7 @@
 
 using System.Numerics;
 using FishPieClient.Graphics;
+using FishPieClient.Graphics.Buffers;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Shaders;
 using FishPieClient.Utils;
@@ -52,10 +53,10 @@ public static class Program
             new(new Vector3(0.5f, -0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f))
         ];
 
-        var triangleBuffer = new Buffer<VertexData>((uint)triangle.Length, _gl);
+        var triangleBuffer = PersistentBuffer<VertexData>.CreateMultiBuffer((uint)triangle.Length, "triangle_buffer", _gl);
         triangleBuffer.Write(triangle, 0);
 
-        var commandBuffer = new Buffer<IndirectCommand>(1, _gl);
+        var commandBuffer = new Buffer<IndirectCommand>(1, "command_buffer", _gl);
         var command = new IndirectCommand(
             count: 3,
             instanceCount: 1,
@@ -68,12 +69,9 @@ public static class Program
         uint dummyVao = _gl.GenVertexArray();
         
         _gl.BindVertexArray(dummyVao);
-        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Handle);
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Buffer.Handle);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
         sampleProg.Use();
-
-        var r1 = 0.0f;
-        var r2 = 1.0f;
         
         while (_running)
         {
@@ -81,7 +79,7 @@ public static class Program
             
             _window.PumpEvent();
 
-            triangle[0].Colour.R += 0.01f;
+            triangle[0].Colour.R += 0.001f;
             if (triangle[0].Colour.R >= 1.0f)
             {
                 triangle[0].Colour.R = 0.0f;
@@ -90,6 +88,7 @@ public static class Program
             triangleBuffer.Write(triangle, 0);
             
             _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 1, 0);
+            triangleBuffer.Advance();
             
             _window.Swap();
         }

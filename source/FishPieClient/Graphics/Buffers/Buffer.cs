@@ -1,23 +1,34 @@
 using FishPieClient.Utils;
 using Silk.NET.OpenGL;
 
-namespace FishPieClient.Graphics;
+namespace FishPieClient.Graphics.Buffers;
 
-public class Buffer<T> : IDisposable
+public class Buffer<T> : IBuffer<T>
     where T : unmanaged
 {
+    
+    public static Buffer<T> Create(uint size, string name, GL gl)
+        => new(size, name, gl);
 
+    public static MultiBuffer<Buffer<T>, T> CreateMultiBuffer(uint size, string name, GL gl, int frames = 3)
+        => new(size, name, gl, Create, frames);
+    
     private readonly GL _gl;
     private readonly uint _size;
     
     public uint Handle { get; }
 
-    public unsafe Buffer(uint size, GL gl)
+    public string Name { get; }
+    
+    public unsafe Buffer(uint size, string name, GL gl)
     {
         _gl = gl;
         _size = size;
+        Name = name;
 
         Handle = _gl.CreateBuffer();
+        _gl.ObjectLabel(ObjectIdentifier.Buffer, Handle, (uint)name.Length, name);
+        
         _gl.NamedBufferStorage(Handle, _size * (uint)sizeof(T), null, BufferStorageMask.DynamicStorageBit);
     }
 
