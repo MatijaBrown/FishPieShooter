@@ -48,23 +48,35 @@ public static class Program
 
         Span<VertexData> triangle =
         [
-            new(new Vector3(0.0f, 0.5f, 0.0f), Colour.Azure),
-            new(new Vector3(-0.5f, -0.5f, 0.0f), new Colour(0.6f, 0.1f, 0.0f)),
-            new(new Vector3(0.5f, -0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f))
+            new(new Vector3(0.0f, 0.0f, 0.0f), Colour.Azure),
+            new(new Vector3(-0.5f, 0.0f, 0.0f), new Colour(0.6f, 0.1f, 0.0f)),
+            new(new Vector3(-0.5f, 0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f)),
+            
+            new(new Vector3(0.0f, 0.0f, 0.0f), Colour.Azure),
+            new(new Vector3(-0.5f, 0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f)),
+            new(new Vector3(0.0f, 0.5f, 0.0f), new Colour(0.6f, 0.1f, 0.0f))
         ];
 
         var triangleBuffer = PersistentBuffer<VertexData>.CreateMultiBuffer((uint)triangle.Length, "triangle_buffer", _gl);
         triangleBuffer.Write(triangle, 0);
 
-        var commandBuffer = new Buffer<IndirectCommand>(1, "command_buffer", _gl);
-        var command = new IndirectCommand(
-            count: 3,
-            instanceCount: 1,
-            first: 0,
-            baseInstance: 0
-        );
-        Span<IndirectCommand> commandView = [command];
-        commandBuffer.Write(commandView, 0);
+        Span<IndirectCommand> commands =
+        [
+            new(
+                count: 3,
+                instanceCount: 1,
+                first: 0,
+                baseInstance: 0
+            ),
+            new(
+                count: 3,
+                instanceCount: 1,
+                first: 3,
+                baseInstance: 0
+            )
+        ];
+        var commandBuffer = new Buffer<IndirectCommand>((uint)commands.Length, "command_buffer", _gl);
+        commandBuffer.Write(commands, 0);
 
         uint dummyVao = _gl.GenVertexArray();
         
@@ -79,15 +91,16 @@ public static class Program
             
             _window.PumpEvent();
 
-            triangle[0].Colour.R += 0.001f;
+            triangle[0].Colour.R += 0.01f;
             if (triangle[0].Colour.R >= 1.0f)
             {
                 triangle[0].Colour.R = 0.0f;
             }
+            triangle[3].Colour = triangle[0].Colour;
 
             triangleBuffer.Write(triangle, 0);
             
-            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 1, 0);
+            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 2, 0);
             triangleBuffer.Advance();
             
             _window.Swap();
