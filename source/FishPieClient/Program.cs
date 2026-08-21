@@ -1,7 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Numerics;
+﻿using System.Numerics;
 using FishPieClient.Graphics;
+using FishPieClient.Graphics.Buffers;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Shaders;
 using FishPieClient.Utils;
@@ -10,14 +9,6 @@ using Silk.NET.OpenGL;
 using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient;
-
-public struct IndirectCommand(uint count, uint instanceCount, uint first, uint baseInstance)
-{
-    public uint Count = count;
-    public uint InstanceCount = instanceCount;
-    public uint First = first;
-    public uint BaseInstance = baseInstance;
-}
 
 public static class Program
 {
@@ -47,58 +38,61 @@ public static class Program
 
         Span<VertexData> triangle =
         [
-            new(new Vector3(0.0f, 0.5f, 0.0f), Colour.Azure),
-            new(new Vector3(-0.5f, -0.5f, 0.0f), new Colour(0.6f, 0.1f, 0.0f)),
-            new(new Vector3(0.5f, -0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f))
+            new(new Vector3(0.0f, 0.0f, 0.0f), Colour.Azure),
+            new(new Vector3(-0.5f, 0.0f, 0.0f), new Colour(0.6f, 0.1f, 0.0f)),
+            new(new Vector3(-0.5f, 0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f)),
+            
+            new(new Vector3(0.0f, 0.0f, 0.0f), Colour.Azure),
+            new(new Vector3(-0.5f, 0.5f, 0.0f), new Colour(0.42f, 0.42f, 0.42f)),
+            new(new Vector3(0.0f, 0.5f, 0.0f), new Colour(0.6f, 0.1f, 0.0f))
         ];
 
-        var triangleBuffer = new Buffer<VertexData>((uint)triangle.Length, _gl);
+        var triangleBuffer = PersistentBuffer<VertexData>.CreateMultiBuffer((uint)triangle.Length, "triangle_buffer", _gl);
         triangleBuffer.Write(triangle, 0);
 
-        var commandBuffer = new Buffer<IndirectCommand>(1, _gl);
-        var command = new IndirectCommand(
-            count: 3,
-            instanceCount: 1,
-            first: 0,
-            baseInstance: 0
-        );
-        Span<IndirectCommand> commandView = [command];
-        commandBuffer.Write(commandView, 0);
+        Span<IndirectCommand> commands =
+        [
+            new(
+                count: 3,
+                instanceCount: 1,
+                first: 0,
+                baseInstance: 0
+            ),
+            new(
+                count: 3,
+                instanceCount: 1,
+                first: 3,
+                baseInstance: 0
+            )
+        ];
+        var commandBuffer = new Buffer<IndirectCommand>((uint)commands.Length, "command_buffer", _gl);
+        commandBuffer.Write(commands, 0);
 
-        uint dummyVao = _gl.GenVertexArray();
-        
-        _gl.BindVertexArray(dummyVao);
-        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, triangleBuffer.Handle);
-        _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
         sampleProg.Use();
 
-        var r1 = 0.0f;
-        var r2 = 1.0f;
+        var renderer = new Renderer(triangleBuffer, _gl);
         
         while (_running)
         {
-            _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             
             _window.PumpEvent();
 
+            renderer.Render(commandBuffer);
+        
             triangle[0].Colour.R += 0.01f;
             if (triangle[0].Colour.R >= 1.0f)
             {
                 triangle[0].Colour.R = 0.0f;
             }
+            triangle[3].Colour = triangle[0].Colour;
 
             triangleBuffer.Write(triangle, 0);
-            
-            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)0, 1, 0);
             
             _window.Swap();
         }
 
-        _gl.BindVertexArray(0);
-        _gl.DeleteVertexArray(dummyVao);
-
+        renderer.Dispose();
         commandBuffer.Dispose();
-        triangleBuffer.Dispose();
         sampleProg.Dispose();
 
         _window.Dispose();
