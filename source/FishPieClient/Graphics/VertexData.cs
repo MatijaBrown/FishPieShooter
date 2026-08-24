@@ -26,5 +26,11 @@ public struct VertexData
     {
         Position = new Vector3(x, y, z);
     }
+
+    public VertexData(float x, float y, float z, Colour colour)
+    {
+        Position = new Vector3(x, y, z);
+        Colour = colour;
+    }
     
 }
