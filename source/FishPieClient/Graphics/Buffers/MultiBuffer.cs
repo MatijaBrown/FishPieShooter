@@ -10,9 +10,6 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     where TBuffer : IBuffer<T>
     where T : unmanaged
 {
-
-    private readonly uint _originalSize;
-
     private int _frameOffset;
     
     public int Frames { get; }
@@ -20,11 +17,13 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     public TBuffer Buffer { get; }
     
     public string Name { get; }
+    
+    public uint OriginalSize { get; }
 
     public MultiBuffer(uint size, string name, GL gl, Func<uint, string, GL, TBuffer> bufferConstructor, int frames = 3)
     {
         Frames = frames;
-        _originalSize = size;
+        OriginalSize = size;
         Name = name;
 
         _frameOffset = 0;
@@ -39,7 +38,7 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
 
     public void Advance()
     {
-        _frameOffset = (_frameOffset + (int)_originalSize) % ((int)_originalSize * Frames);
+        _frameOffset = (_frameOffset + (int)OriginalSize) % ((int)OriginalSize * Frames);
     }
 
     public void Dispose()
