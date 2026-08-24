@@ -5,8 +5,6 @@ public interface IBuffer<T> : IDisposable
 {
     
     public string Name { get; }
-
-    public uint Size { get; }
     
     public void Write(Span<T> data, int offset);
 
