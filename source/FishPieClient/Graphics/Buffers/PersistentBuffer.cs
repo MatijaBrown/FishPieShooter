@@ -16,7 +16,7 @@ public unsafe class PersistentBuffer<T> : IBuffer<T>
     
     private readonly GL _gl;
     private readonly uint _size;
-
+    
     private readonly void* _map;
     
     public uint Handle { get; }

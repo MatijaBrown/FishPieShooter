@@ -14,27 +14,28 @@ public class Buffer<T> : IBuffer<T>
         => new(size, name, gl, Create, frames);
     
     private readonly GL _gl;
-    private readonly uint _size;
-    
+
     public uint Handle { get; }
 
     public string Name { get; }
-    
+
+    public uint Size { get; }
+
     public unsafe Buffer(uint size, string name, GL gl)
     {
         _gl = gl;
-        _size = size;
+        Size = size;
         Name = name;
 
         Handle = _gl.CreateBuffer();
         _gl.ObjectLabel(ObjectIdentifier.Buffer, Handle, (uint)name.Length, name);
         
-        _gl.NamedBufferStorage(Handle, _size * (uint)sizeof(T), null, BufferStorageMask.DynamicStorageBit);
+        _gl.NamedBufferStorage(Handle, Size * (uint)sizeof(T), null, BufferStorageMask.DynamicStorageBit);
     }
 
     public unsafe void Write(Span<T> data, int offset)
     {
-        Errors.Expect(_size >= data.Length + offset, "buffer too small");
+        Errors.Expect(Size >= data.Length + offset, "buffer too small");
         _gl.NamedBufferSubData(Handle, offset * sizeof(T), data);
     }
 
