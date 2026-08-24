@@ -35,15 +35,9 @@ public static class Program
         };
         
         _gl = _window.Gl;
-
-        var sampleVert = new Shader("sample.vert", Shader.Type.Vertex, "sample_vertex_shader", _gl);
-        var sampleFrag = new Shader("sample.frag", Shader.Type.Fragment, "sample_fragment_shader", _gl);
-        var sampleProg = new ShaderProgram(sampleVert, sampleFrag, "sample_prog", _gl);
-        sampleVert.Dispose();
-        sampleFrag.Dispose();
-
+        
         var meshManager = new MeshManager(_gl);
-        var commandBuffer = new CommandBuffer(_gl);
+        var renderer = new Renderer(_gl);
 
         var scene = new Scene(meshManager);
         
@@ -58,32 +52,20 @@ public static class Program
             new VertexData(0.0f, 0.5f, 0.0f, new Colour(0.6f, 0.1f, 0.0f))
         ])));
         
-        uint dummyVao = _gl.GenVertexArray();
-
-        _gl.BindVertexArray(dummyVao);
-        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, meshManager.Handle);
-        sampleProg.Use();
-        
         while (_running)
         {
             _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             
             _window.PumpEvent();
 
-            var commandCount = commandBuffer.Build(scene);
-            _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
-            
-            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, null, commandCount, 0);
+            renderer.Render(scene);
             
             _window.Swap();
         }
-
-        _gl.DeleteVertexArray(dummyVao);
-
+        
         scene.Dispose();
-        commandBuffer.Dispose();
+        renderer.Dispose();
         meshManager.Dispose();
-        sampleProg.Dispose();
 
         _window.Dispose();
     }
