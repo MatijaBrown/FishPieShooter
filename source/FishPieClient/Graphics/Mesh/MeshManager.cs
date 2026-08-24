@@ -42,6 +42,10 @@ public class MeshManager : IDisposable
             Log.Information("growing {BufferName} buffer {OldSize} -> {NewSize}", _meshDataGpu.Name, _meshDataGpu.Size,
                 newSize);
             _meshDataGpu.Dispose();
+            
+            // OpenGL barrier in case GPU using previous frame
+            _gl.Finish();
+            
             _meshDataGpu = new Buffer<VertexData>(newSize, "mesh_data", _gl);
         }
 
