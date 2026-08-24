@@ -5,6 +5,7 @@ using FishPieClient.Graphics.Commands;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Graphics.Shaders;
+using FishPieClient.Input;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
@@ -46,11 +47,28 @@ public static class Program
             new VertexData(-0.5f, 0.0f, 0.0f, new Colour(0.6f, 0.1f, 0.0f)),
             new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f))
         ])));
-        scene.Entities.Add(new Entity(meshManager.Load([
-            new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
-            new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f)),
-            new VertexData(0.0f, 0.5f, 0.0f, new Colour(0.6f, 0.1f, 0.0f))
-        ])));
+
+        bool once = false;
+        _window.OnKeyboard += (key, keyState) =>
+        {
+            if (key == Key.T)
+            {
+                if (!once)
+                {
+                    scene.Entities.Add(new Entity(meshManager.Load([
+                        new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
+                        new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f)),
+                        new VertexData(0.0f, 0.5f, 0.0f, new Colour(0.6f, 0.1f, 0.0f))
+                    ])));
+                    once = true;
+                }
+            }
+            else
+            {
+                Log.Information("stopping");
+                _running = false;
+            }
+        };
         
         while (_running)
         {
