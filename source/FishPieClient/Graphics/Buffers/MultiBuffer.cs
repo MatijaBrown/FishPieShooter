@@ -21,6 +21,8 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     
     public string Name { get; }
 
+    public uint Size => Buffer.Size;
+
     public MultiBuffer(uint size, string name, GL gl, Func<uint, string, GL, TBuffer> bufferConstructor, int frames = 3)
     {
         Frames = frames;
