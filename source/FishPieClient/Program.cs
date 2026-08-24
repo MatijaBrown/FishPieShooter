@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using FishPieClient.Graphics;
 using FishPieClient.Graphics.Buffers;
+using FishPieClient.Graphics.Commands;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Graphics.Shaders;
@@ -42,40 +43,25 @@ public static class Program
         sampleFrag.Dispose();
 
         var meshManager = new MeshManager(_gl);
-        var tri1 = meshManager.Load([
+        var commandBuffer = new CommandBuffer(_gl);
+
+        var scene = new Scene(meshManager);
+        
+        scene.Entities.Add(new Entity(meshManager.Load([
             new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
             new VertexData(-0.5f, 0.0f, 0.0f, new Colour(0.6f, 0.1f, 0.0f)),
             new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f))
-        ]);
-        var tri2 = meshManager.Load([
+        ])));
+        scene.Entities.Add(new Entity(meshManager.Load([
             new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
             new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f)),
             new VertexData(0.0f, 0.5f, 0.0f, new Colour(0.6f, 0.1f, 0.0f))
-        ]);
-
-        Span<IndirectCommand> commands =
-        [
-            new(
-                count: tri1.Count,
-                instanceCount: 1,
-                first: tri1.Offset,
-                baseInstance: 0
-            ),
-            new(
-                count: tri2.Count,
-                instanceCount: 1,
-                first: tri2.Offset,
-                baseInstance: 0
-            )
-        ];
-        var commandBuffer = new Buffer<IndirectCommand>((uint)commands.Length, "command_buffer", _gl);
-        commandBuffer.Write(commands, 0);
-
+        ])));
+        
         uint dummyVao = _gl.GenVertexArray();
 
         _gl.BindVertexArray(dummyVao);
         _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, meshManager.Handle);
-        _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
         sampleProg.Use();
         
         while (_running)
@@ -84,13 +70,17 @@ public static class Program
             
             _window.PumpEvent();
 
-            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, null, 2, 0);
+            var commandCount = commandBuffer.Build(scene);
+            _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, commandBuffer.Handle);
+            
+            _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, null, commandCount, 0);
             
             _window.Swap();
         }
 
         _gl.DeleteVertexArray(dummyVao);
 
+        scene.Dispose();
         commandBuffer.Dispose();
         meshManager.Dispose();
         sampleProg.Dispose();

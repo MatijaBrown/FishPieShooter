@@ -10,13 +10,13 @@ public class Scene : IDisposable
     
     public MeshManager MeshManager { get; }
 
-    public Scene(GL gl)
+    public Scene(MeshManager meshManager)
     {
-        MeshManager = new MeshManager(gl);
+        MeshManager = meshManager;
     }
 
     public void Dispose()
     {
-        MeshManager.Dispose();
+        
     }
 }
