@@ -12,6 +12,8 @@ public class CommandBuffer : IDisposable
     private MultiBuffer<PersistentBuffer<IndirectCommand>, IndirectCommand> _commandBuffer;
 
     public uint Handle => _commandBuffer.Buffer.Handle;
+
+    public int OffsetBytes => _commandBuffer.FrameOffsetBytes;
     
     public CommandBuffer(GL gl)
     {

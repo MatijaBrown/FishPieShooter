@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 
 namespace FishPieClient.Graphics.Buffers;
@@ -10,6 +11,9 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     where TBuffer : IBuffer<T>
     where T : unmanaged
 {
+    
+    private readonly int _byteSize;
+    
     private int _frameOffset;
     
     public int Frames { get; }
@@ -20,6 +24,8 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     
     public uint OriginalSize { get; }
 
+    public int FrameOffsetBytes => _frameOffset * _byteSize;
+
     public MultiBuffer(uint size, string name, GL gl, Func<uint, string, GL, TBuffer> bufferConstructor, int frames = 3)
     {
         Frames = frames;
@@ -27,6 +33,7 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
         Name = name;
 
         _frameOffset = 0;
+        _byteSize = Marshal.SizeOf<T>();
 
         Buffer = bufferConstructor(size * (uint)frames, name, gl);
     }

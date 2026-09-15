@@ -47,8 +47,8 @@ public class Renderer : IDisposable
         var commandCount = _commandBuffer.Build(scene);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, _commandBuffer.Handle);
 
-        _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, null, commandCount, 0);
-
+        _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)_commandBuffer.OffsetBytes, commandCount, 0);
+        
         _commandBuffer.Advance();
     }
 
