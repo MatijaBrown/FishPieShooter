@@ -23,8 +23,13 @@ public class CommandBuffer : IDisposable
 
     public uint Build(Scene scene)
     {
-        var commands = scene.Entities.ConvertAll(e => new IndirectCommand(
-            Count: e.MeshView.Count, InstanceCount: 1, First: e.MeshView.Offset, BaseInstance: 0
+        var commands = scene.Entities.ConvertAll(e =>
+            new IndirectCommand(
+                Count: e.MeshView.IndexCount,
+                InstanceCount: 1,
+                First: e.MeshView.IndexOffset,
+                BaseVertex: (int)e.MeshView.VertexOffset,
+                BaseInstance: 0
         )).ToArray();
         var commandView = new Span<IndirectCommand>(commands);
 
