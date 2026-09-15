@@ -1,15 +1,11 @@
-﻿using System.Numerics;
+﻿using System.Collections.Specialized;
+using System.Numerics;
 using FishPieClient.Graphics;
-using FishPieClient.Graphics.Buffers;
-using FishPieClient.Graphics.Commands;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Mesh;
-using FishPieClient.Graphics.Shaders;
-using FishPieClient.Input;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
-using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient;
 
@@ -20,6 +16,33 @@ public static class Program
     private static bool _running = true;
 
     private static GL? _gl;
+
+    private static MeshData Cube()
+    {
+        List<Vector3> positions =
+        [
+            new(-1.0f, -1.0f, 1.0f),     new(1.0f, -1.0f, 1.0f),      new(1.0f, 1.0f, 1.0f),
+            new(-1.0f, 1.0f, 1.0f),      new(-1.0f, -1.0f, -1.0f),    new(1.0f, -1.0f, -1.0f),
+            new(1.0f, 1.0f, -1.0f),      new(-1.0f, 1.0f, -1.0f),     new(-1.0f, -1.0f, -1.0f),
+            new(-1.0f, -1.0f, 1.0f),     new(-1.0f, 1.0f, 1.0f),      new(-1.0f, 1.0f, -1.0f),
+            new(1.0f, -1.0f, -1.0f),     new(1.0f, -1.0f, 1.0f),      new(1.0f, 1.0f, 1.0f),
+            new(1.0f, 1.0f, -1.0f),      new(-1.0f, 1.0f, 1.0f),      new(1.0f, 1.0f, 1.0f),
+            new(1.0f, 1.0f, -1.0f),      new(-1.0f, 1.0f, -1.0f),     new(-1.0f, -1.0f, 1.0f),
+            new(-1.0f, -1.0f, -1.0f),    new(1.0f, -1.0f, -1.0f),     new(1.0f, -1.0f, 1.0f)
+        ];
+
+        List<uint> indices =
+        [
+            0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8,
+            12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22,
+            22, 23, 20
+        ];
+        
+        return new MeshData(
+            Vertices: positions.ConvertAll(pos => new VertexData(pos, Colour.Azure)),
+            Indices: indices
+        );
+    }
     
     private static unsafe void Main(string[] args)
     {
@@ -42,32 +65,12 @@ public static class Program
 
         var scene = new Scene(meshManager);
         
-        scene.Entities.Add(new Entity(meshManager.Load([
-            new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
-            new VertexData(-0.5f, 0.0f, 0.0f, new Colour(0.6f, 0.1f, 0.0f)),
-            new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f))
-        ])));
+        scene.Entities.Add(new Entity(meshManager.Load(Cube())));
 
-        bool once = false;
         _window.OnKeyboard += (key, keyState) =>
         {
-            if (key == Key.T)
-            {
-                if (!once)
-                {
-                    scene.Entities.Add(new Entity(meshManager.Load([
-                        new VertexData(0.0f, 0.0f, 0.0f, Colour.Azure),
-                        new VertexData(-0.5f, 0.5f, 0.0f, new Colour(0.42f, 0.42f, 0.42f)),
-                        new VertexData(0.0f, 0.5f, 0.0f, new Colour(0.6f, 0.1f, 0.0f))
-                    ])));
-                    once = true;
-                }
-            }
-            else
-            {
-                Log.Information("stopping");
-                _running = false;
-            }
+            Log.Information("stopping");
+            _running = false;
         };
         
         while (_running)
