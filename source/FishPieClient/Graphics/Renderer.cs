@@ -42,12 +42,20 @@ public class Renderer : IDisposable
 
     public unsafe void Render(Scene scene)
     {
-        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, scene.MeshManager.Handle);
-
+        var (vertexBufferHandle, indexBufferHandle) = scene.MeshManager.Handle;
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, vertexBufferHandle);
+        _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, indexBufferHandle);
+        
         var commandCount = _commandBuffer.Build(scene);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, _commandBuffer.Handle);
 
-        _gl.MultiDrawArraysIndirect(PrimitiveType.Triangles, (void*)_commandBuffer.OffsetBytes, commandCount, 0);
+        _gl.MultiDrawElementsIndirect(
+            PrimitiveType.Triangles,
+            DrawElementsType.UnsignedInt,
+            (void*)_commandBuffer.OffsetBytes,
+            commandCount,
+            0
+        );
         
         _commandBuffer.Advance();
     }
