@@ -53,7 +53,7 @@ public static class Program
         Log.Information("FPS Version: {Major}.{Minor}.{Build}", ProjectUtils.Major, ProjectUtils.Minor, ProjectUtils.Build);
         Log.Information("{OSVersion}", Environment.OSVersion.ToString());
 
-        _window = new Window(WindowMode.Windowed, 1920, 1080, 1920, 0);
+        _window = new Window(WindowMode.Windowed, 1920, 1080, 1920, 0, mouseLocked: true);
         _window.OnClose += () =>
         {
             Log.Information("stopping");
@@ -81,6 +81,16 @@ public static class Program
                 Log.Information("stopping");
                 _running = false;
             }
+        };
+
+        _window.OnMouseMove += (deltaX, deltaY) =>
+        {
+            const float sensitivity = 0.002f;
+            
+            var dx = deltaX * sensitivity;
+            var dy = deltaY * sensitivity;
+            scene.Camera.AdjustYaw(dx);
+            scene.Camera.AdjustPitch(-dy);
         };
         
         while (_running)
