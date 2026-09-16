@@ -21,6 +21,8 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     public TBuffer Buffer { get; }
     
     public string Name { get; }
+
+    public uint Handle => Buffer.Handle;
     
     public uint OriginalSize { get; }
 
