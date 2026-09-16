@@ -1,8 +1,10 @@
 ﻿using System.Collections.Specialized;
 using System.Numerics;
+using FishPieClient.Core;
 using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Mesh;
+using FishPieClient.Input;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
@@ -63,14 +65,22 @@ public static class Program
         var meshManager = new MeshManager(_gl);
         var renderer = new Renderer(_gl);
 
-        var scene = new Scene(meshManager);
+        var scene = new Scene(
+            meshManager: meshManager,
+            camera: new Camera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY,
+                MathF.PI / 4.0f,
+                _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f)
+        );
         
         scene.Entities.Add(new Entity(meshManager.Load(Cube())));
 
         _window.OnKeyboard += (key, keyState) =>
         {
-            Log.Information("stopping");
-            _running = false;
+            if (key == Key.Esc)
+            {
+                Log.Information("stopping");
+                _running = false;
+            }
         };
         
         while (_running)
@@ -79,6 +89,8 @@ public static class Program
             
             _window.PumpEvent();
 
+            scene.Camera.Translate(0.01f * Vector3.UnitZ);
+            
             renderer.Render(scene);
             
             _window.Swap();
