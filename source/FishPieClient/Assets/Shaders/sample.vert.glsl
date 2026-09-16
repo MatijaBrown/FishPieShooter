@@ -9,6 +9,11 @@ layout(binding = 0, std430) readonly buffer vertices {
     VertexData data[];
 };
 
+layout(binding = 1, std430) readonly buffer camera {
+    mat4 view;
+    mat4 projection;
+};
+
 vec3 get_position(int index) {
     return vec3(
         data[index].position[0],
@@ -28,6 +33,6 @@ vec3 get_colour(int index) {
 layout(location = 0) out vec3 out_colour;
 
 void main(void) {
-    gl_Position = vec4(get_position(gl_VertexID), 1.0);
+    gl_Position = projection * view * vec4(get_position(gl_VertexID), 1.0);
     out_colour = get_colour(gl_VertexID);
 }

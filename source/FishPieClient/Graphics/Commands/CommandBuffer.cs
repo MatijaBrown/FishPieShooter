@@ -12,6 +12,8 @@ public class CommandBuffer : IDisposable
     private MultiBuffer<PersistentBuffer<IndirectCommand>, IndirectCommand> _commandBuffer;
 
     public uint Handle => _commandBuffer.Buffer.Handle;
+
+    public int OffsetBytes => _commandBuffer.FrameOffsetBytes;
     
     public CommandBuffer(GL gl)
     {
@@ -21,8 +23,13 @@ public class CommandBuffer : IDisposable
 
     public uint Build(Scene scene)
     {
-        var commands = scene.Entities.ConvertAll(e => new IndirectCommand(
-            Count: e.MeshView.Count, InstanceCount: 1, First: e.MeshView.Offset, BaseInstance: 0
+        var commands = scene.Entities.ConvertAll(e =>
+            new IndirectCommand(
+                Count: e.MeshView.IndexCount,
+                InstanceCount: 1,
+                First: e.MeshView.IndexOffset,
+                BaseVertex: (int)e.MeshView.VertexOffset,
+                BaseInstance: 0
         )).ToArray();
         var commandView = new Span<IndirectCommand>(commands);
 

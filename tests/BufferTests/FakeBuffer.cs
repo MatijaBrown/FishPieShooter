@@ -11,6 +11,8 @@ internal class FakeBuffer<T>(uint size, string name) : IBuffer<T>
     internal uint Size = size;
 
     public string Name => name;
+
+    public uint Handle => uint.MaxValue;
         
     public void Write(Span<T> data, int offset)
     {

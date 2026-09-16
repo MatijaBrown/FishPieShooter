@@ -63,12 +63,16 @@ public class MultiBufferTests
         
         var mb = new MultiBuffer<FakeBuffer<byte>, byte>((uint)dataView.Length, "test_buffer", null!,
             (size, name, _) => new FakeBuffer<byte>(size, name), 3);
+        Assert.That(mb.FrameOffsetBytes, Is.EqualTo(0));
         mb.Write(dataView, 0);
         mb.Advance();
+        Assert.That(mb.FrameOffsetBytes, Is.EqualTo(1 * dataView.Length)); // sizeof(byte) = 1
         mb.Write(dataView, 0);
         mb.Advance();
+        Assert.That(mb.FrameOffsetBytes, Is.EqualTo(2 * dataView.Length));
         mb.Write(dataView, 0);
         mb.Advance();
+        Assert.That(mb.FrameOffsetBytes, Is.EqualTo(0));
         mb.Write(dataView, 0);
 
         var buffer = mb.Buffer;
