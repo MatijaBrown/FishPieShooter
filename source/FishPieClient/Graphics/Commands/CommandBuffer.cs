@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using FishPieClient.Graphics.Buffers;
 using Serilog;
 using Silk.NET.OpenGL;
@@ -30,28 +31,13 @@ public class CommandBuffer : IDisposable
                 First: e.MeshView.IndexOffset,
                 BaseVertex: (int)e.MeshView.VertexOffset,
                 BaseInstance: 0
-        )).ToArray();
-        var commandView = new Span<IndirectCommand>(commands);
-
-        if (commandView.Length > _commandBuffer.OriginalSize)
-        {
-            var newSize = _commandBuffer.OriginalSize * 2;
-            while (newSize < commandView.Length)
-            {
-                newSize *= 2;
-            }
-
-            Log.Information("growing command buffer {OriginalSize} -> {NewSize}", _commandBuffer.OriginalSize, newSize);
-            
-            // OpenGL barrier in case GPU using previous frame
-            _gl.Finish();
-
-            _commandBuffer.Dispose();
-            _commandBuffer = PersistentBuffer<IndirectCommand>.CreateMultiBuffer(newSize, "command_buffer", _gl);
-        }
-
+        ));
+        var commandView = CollectionsMarshal.AsSpan(commands);
+        
+        _commandBuffer = Utils.ResizeGpuBuffer(commands, _commandBuffer, _gl);
         _commandBuffer.Write(commandView, 0);
-        return (uint)commands.Length;
+        
+        return (uint)commands.Count;
     }
 
     public void Advance()
@@ -61,7 +47,7 @@ public class CommandBuffer : IDisposable
 
     public override string ToString()
     {
-        return $"command buffer {_commandBuffer.OriginalSize} size";
+        return $"command buffer {_commandBuffer.Size} size";
     }
 
     public void Dispose()

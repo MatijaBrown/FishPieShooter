@@ -27,43 +27,18 @@ public class MeshManager : IDisposable
         _indexDataGpu = new Buffer<uint>(1, "index_mesh_data", _gl);
     }
 
-    private void ResizeGpuBuffer<T>(ICollection<T> cpuBuffer, ref Buffer<T> gpuBuffer)
-        where T : unmanaged
-    {
-        var name = gpuBuffer.Name;
-        var bufferSize = (uint)cpuBuffer.Count;
-
-        if (gpuBuffer.Size <= bufferSize)
-        {
-            var newSize = gpuBuffer.Size * 2;
-            while (newSize < bufferSize)
-            {
-                newSize *= 2;
-            }
-
-            Log.Information("growing {BufferName} buffer {OldSize} -> {NewSize}", name, gpuBuffer.Size,
-                newSize);
-            gpuBuffer.Dispose();
-            
-            // OpenGL barrier in case GPU using previous frame
-            _gl.Finish();
-            
-            gpuBuffer = new Buffer<T>(newSize, name, _gl);
-        }
-    }
-
     public MeshView Load(MeshData meshData)
     {
         var vertexOffset = _vertexDataCpu.Count;
         var indexOffset = _indexDataCpu.Count;
         
         _vertexDataCpu.AddRange(meshData.Vertices);
-        ResizeGpuBuffer(_vertexDataCpu, ref _vertexDataGpu);
+        _vertexDataGpu = Utils.ResizeGpuBuffer(_vertexDataCpu, _vertexDataGpu, _gl);
         var vertexDataView = CollectionsMarshal.AsSpan(_vertexDataCpu);
         _vertexDataGpu.Write(vertexDataView, 0);
         
         _indexDataCpu.AddRange(meshData.Indices);
-        ResizeGpuBuffer(_indexDataCpu, ref _indexDataGpu);
+        _indexDataGpu = Utils.ResizeGpuBuffer(_indexDataCpu, _indexDataGpu, _gl);
         var indexDataView = CollectionsMarshal.AsSpan(_indexDataCpu);
         _indexDataGpu.Write(indexDataView, 0);
 

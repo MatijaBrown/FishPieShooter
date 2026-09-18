@@ -21,6 +21,8 @@ public class Buffer<T> : IBuffer<T>
 
     public uint Size { get; }
 
+    public Func<uint, string, GL, IBuffer<T>> InstanceCreator => Create;
+
     public unsafe Buffer(uint size, string name, GL gl)
     {
         _gl = gl;
