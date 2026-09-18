@@ -45,8 +45,36 @@ public static class Program
             Indices: indices
         );
     }
+
+    private static Vector3 WalkDirection(Dictionary<Key, bool> keyState, Camera camera)
+    {
+        var direction = Vector3.Zero;
+
+        if (keyState[Key.W])
+        {
+            direction += camera.Direction;
+        }
+
+        if (keyState[Key.S])
+        {
+            direction -= camera.Direction;
+        }
+
+        if (keyState[Key.D])
+        {
+            direction += camera.Right;
+        }
+
+        if (keyState[Key.A])
+        {
+            direction -= camera.Right;
+        }
+
+        const float speed = 0.5f;
+        return direction == Vector3.Zero ? Vector3.Zero : Vector3.Normalize(direction) * speed;
+    }
     
-    private static unsafe void Main(string[] args)
+    private static void Main(string[] args)
     {
         Logging.InitLogger();
         
@@ -74,12 +102,24 @@ public static class Program
         
         scene.Entities.Add(new Entity(meshManager.Load(Cube())));
 
-        _window.OnKeyboard += (key, keyState) =>
+        var keyState = new Dictionary<Key, bool>()
+        {
+            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }
+        };
+        
+        _window.OnKeyboard += (key, state) =>
         {
             if (key == Key.Esc)
             {
                 Log.Information("stopping");
                 _running = false;
+            }
+            else
+            {
+                if (keyState.ContainsKey(key))
+                {
+                    keyState[key] = state == KeyState.Down;
+                }
             }
         };
 
@@ -99,7 +139,7 @@ public static class Program
             
             _window.PumpEvent();
 
-            scene.Camera.Translate(0.01f * Vector3.UnitZ);
+            scene.Camera.Translate(WalkDirection(keyState, scene.Camera));
             
             renderer.Render(scene);
             
