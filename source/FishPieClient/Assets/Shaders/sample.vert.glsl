@@ -5,6 +5,10 @@ struct VertexData {
     float colour[3];
 };
 
+struct ObjectData {
+    mat4 model;
+};
+
 layout(binding = 0, std430) readonly buffer vertices {
     VertexData data[];
 };
@@ -12,6 +16,10 @@ layout(binding = 0, std430) readonly buffer vertices {
 layout(binding = 1, std430) readonly buffer camera {
     mat4 view;
     mat4 projection;
+};
+
+layout(binding = 2, std430) readonly buffer objects {
+    ObjectData object_data[];
 };
 
 vec3 get_position(int index) {
@@ -33,6 +41,6 @@ vec3 get_colour(int index) {
 layout(location = 0) out vec3 out_colour;
 
 void main(void) {
-    gl_Position = projection * view * vec4(get_position(gl_VertexID), 1.0);
+    gl_Position = projection * view * object_data[gl_DrawID].model * vec4(get_position(gl_VertexID), 1.0);
     out_colour = get_colour(gl_VertexID);
 }

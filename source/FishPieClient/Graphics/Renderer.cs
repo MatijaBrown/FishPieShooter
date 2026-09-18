@@ -1,7 +1,11 @@
+using System.Numerics;
+using System.Runtime.InteropServices;
 using FishPieClient.Core;
 using FishPieClient.Graphics.Buffers;
 using FishPieClient.Graphics.Commands;
+using FishPieClient.Graphics.Data;
 using FishPieClient.Graphics.Shaders;
+using FishPieClient.Maths;
 using Silk.NET.OpenGL;
 using Shader = FishPieClient.Graphics.Shaders.Shader;
 
@@ -30,6 +34,8 @@ public class Renderer : IDisposable
     private readonly ShaderProgram _program;
     
     private readonly GL _gl;
+    
+    private MultiBuffer<PersistentBuffer<ObjectData>, ObjectData> _objectDataBuffer;
 
     public Renderer(GL gl)
     {
@@ -37,6 +43,7 @@ public class Renderer : IDisposable
 
         _commandBuffer = new CommandBuffer(_gl);
         _cameraBuffer = PersistentBuffer<CameraData>.CreateMultiBuffer(1, "camera_buffer", _gl);
+        _objectDataBuffer = PersistentBuffer<ObjectData>.CreateMultiBuffer(1, "object_data_buffer", _gl);
         
         _program = CreateProgram(_gl);
         
@@ -60,6 +67,14 @@ public class Renderer : IDisposable
         var commandCount = _commandBuffer.Build(scene);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, _commandBuffer.Handle);
 
+        var objectData = scene.Entities.ConvertAll(e => new ObjectData(
+            model: e.Transform
+        ));
+        _objectDataBuffer = Utils.ResizeGpuBuffer(objectData, _objectDataBuffer, _gl);
+        _objectDataBuffer.Write(CollectionsMarshal.AsSpan(objectData), 0);
+        _gl.BindBufferRange(BufferTargetARB.ShaderStorageBuffer, 2, _objectDataBuffer.Handle,
+            _objectDataBuffer.FrameOffsetBytes, (uint)sizeof(ObjectData));
+        
         _gl.MultiDrawElementsIndirect(
             PrimitiveType.Triangles,
             DrawElementsType.UnsignedInt,
@@ -69,6 +84,8 @@ public class Renderer : IDisposable
         );
         
         _commandBuffer.Advance();
+        _cameraBuffer.Advance();
+        _objectDataBuffer.Advance();
     }
 
     public void Dispose()
@@ -77,5 +94,6 @@ public class Renderer : IDisposable
         _program.Dispose();
         _commandBuffer.Dispose();
         _cameraBuffer.Dispose();
+        _objectDataBuffer.Dispose();
     }
 }
