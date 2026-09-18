@@ -5,6 +5,7 @@ using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Input;
+using FishPieClient.Maths;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
@@ -100,7 +101,11 @@ public static class Program
                 _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f)
         );
         
-        scene.Entities.Add(new Entity(meshManager.Load(Cube())));
+        scene.Entities.Add(new Entity()
+        {
+            MeshView = meshManager.Load(Cube()),
+            Transform = new Transform(new Vector3(10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity)
+        });
 
         var keyState = new Dictionary<Key, bool>()
         {
