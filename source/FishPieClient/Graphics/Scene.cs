@@ -1,4 +1,5 @@
 using FishPieClient.Core;
+using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
 using Silk.NET.OpenGL;
 
@@ -11,11 +12,14 @@ public class Scene : IDisposable
     
     public MeshManager MeshManager { get; }
     
+    public MaterialManager MaterialManager { get; }
+    
     public Camera Camera { get; }
 
-    public Scene(MeshManager meshManager, Camera camera)
+    public Scene(MeshManager meshManager, MaterialManager materialManager, Camera camera)
     {
         MeshManager = meshManager;
+        MaterialManager = materialManager;
         Camera = camera;
     }
 
