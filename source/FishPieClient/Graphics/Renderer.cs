@@ -1,17 +1,15 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using FishPieClient.Core;
 using FishPieClient.Graphics.Buffers;
 using FishPieClient.Graphics.Commands;
 using FishPieClient.Graphics.Data;
 using FishPieClient.Graphics.Shaders;
-using FishPieClient.Maths;
 using Silk.NET.OpenGL;
 using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient.Graphics;
 
-public class Renderer : IDisposable
+public sealed class Renderer : IDisposable
 {
 
     private static ShaderProgram CreateProgram(GL gl)
@@ -67,13 +65,21 @@ public class Renderer : IDisposable
         var commandCount = _commandBuffer.Build(scene);
         _gl.BindBuffer(BufferTargetARB.DrawIndirectBuffer, _commandBuffer.Handle);
 
-        var objectData = scene.Entities.ConvertAll(e => new ObjectData(
-            model: e.Transform
-        ));
+        var objectData = scene.Entities.ConvertAll(e =>
+        {
+            var index = scene.MaterialManager.Index(e.MaterialKey);
+            
+            return new ObjectData(
+                model: e.Transform,
+                materialIdIndex: index
+            );
+        });
         _objectDataBuffer = Utils.ResizeGpuBuffer(objectData, _objectDataBuffer, _gl);
         _objectDataBuffer.Write(CollectionsMarshal.AsSpan(objectData), 0);
-        _gl.BindBufferRange(BufferTargetARB.ShaderStorageBuffer, 2, _objectDataBuffer.Handle,
-            _objectDataBuffer.FrameOffsetBytes, (uint)sizeof(ObjectData));
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 2, _objectDataBuffer.Handle);
+
+        scene.MaterialManager.Sync();
+        _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 3, scene.MaterialManager.Handle);
         
         _gl.MultiDrawElementsIndirect(
             PrimitiveType.Triangles,
@@ -86,6 +92,7 @@ public class Renderer : IDisposable
         _commandBuffer.Advance();
         _cameraBuffer.Advance();
         _objectDataBuffer.Advance();
+        //scene.MaterialManager.Advance();
     }
 
     public void Dispose()
