@@ -56,6 +56,10 @@ public sealed class FlatMap<TKey, TValue> : IDictionary<TKey, TValue>
     public int Count { get; private set; }
 
     public bool IsReadOnly => false;
+
+    public Span<TKey> KeysView => _keys.AsSpan(0, Count);
+    
+    public Span<TValue> ValuesView => _values.AsSpan(0, Count);
     
     public FlatMap()
     {
