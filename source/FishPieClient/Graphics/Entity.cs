@@ -1,3 +1,4 @@
+using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Maths;
 
@@ -9,5 +10,7 @@ public class Entity
     public required MeshView MeshView { get; set; }
 
     public required Transform Transform { get; set; }
-    
+
+    public required MaterialKey MaterialKey { get; set; }
+
 }
