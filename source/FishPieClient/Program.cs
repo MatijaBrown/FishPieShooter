@@ -3,11 +3,14 @@ using System.Numerics;
 using FishPieClient.Core;
 using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
+using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Input;
+using FishPieClient.Maths;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
+using Key = FishPieClient.Input.Key;
 
 namespace FishPieClient;
 
@@ -41,12 +44,50 @@ public static class Program
         ];
         
         return new MeshData(
-            Vertices: positions.ConvertAll(pos => new VertexData(pos, Colour.Azure)),
+            Vertices: positions.ConvertAll(pos => new VertexData(pos)),
             Indices: indices
         );
     }
+
+    private static Vector3 WalkDirection(Dictionary<Key, bool> keyState, Camera camera)
+    {
+        var direction = Vector3.Zero;
+
+        if (keyState[Key.W])
+        {
+            direction += camera.Direction;
+        }
+
+        if (keyState[Key.S])
+        {
+            direction -= camera.Direction;
+        }
+
+        if (keyState[Key.D])
+        {
+            direction += camera.Right;
+        }
+
+        if (keyState[Key.A])
+        {
+            direction -= camera.Right;
+        }
+
+        if (keyState[Key.Space])
+        {
+            direction += Vector3.UnitY;
+        }
+
+        if (keyState[Key.LShift])
+        {
+            direction -= Vector3.UnitY;
+        }
+
+        const float speed = 0.5f;
+        return direction == Vector3.Zero ? Vector3.Zero : Vector3.Normalize(direction) * speed;
+    }
     
-    private static unsafe void Main(string[] args)
+    private static void Main(string[] args)
     {
         Logging.InitLogger();
         
@@ -63,23 +104,57 @@ public static class Program
         _gl = _window.Gl;
         
         var meshManager = new MeshManager(_gl);
+        var materialManager = new MaterialManager(_gl);
         var renderer = new Renderer(_gl);
-
+        
         var scene = new Scene(
             meshManager: meshManager,
+            materialManager: materialManager,
             camera: new Camera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY,
                 MathF.PI / 4.0f,
                 _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f)
         );
         
-        scene.Entities.Add(new Entity(meshManager.Load(Cube())));
+        var materialKeyRed = materialManager.Add(new MaterialData(
+            new Colour(1.0f, 0.0f, 0.0f)
+        ));
+        var materialKeyBlue = materialManager.Add(new MaterialData(
+            new Colour(0.0f, 0.0f, 1.0f)
+        ));
+        var materialKeyGreen = materialManager.Add(new MaterialData(
+            new Colour(0.0f, 1.0f, 0.0f)
+        ));
+        
+        materialManager.Remove(materialKeyBlue);
+        
+        scene.Entities.Add(new Entity()
+        {
+            MeshView = meshManager.Load(Cube()),
+            Transform = new Transform(new Vector3(10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
+            MaterialKey = materialKeyRed
+        });
+        scene.Entities.Add(new Entity()
+        {
+            MeshView = meshManager.Load(Cube()),
+            Transform = new Transform(new Vector3(-10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
+            MaterialKey = materialKeyGreen
+        });
 
-        _window.OnKeyboard += (key, keyState) =>
+        var keyState = new Dictionary<Key, bool>()
+        {
+            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }, { Key.Space, false }, { Key.LShift, false }
+        };
+        
+        _window.OnKeyboard += (key, state) =>
         {
             if (key == Key.Esc)
             {
                 Log.Information("stopping");
                 _running = false;
+            }
+            else
+            {
+                keyState[key] = state == KeyState.Down;
             }
         };
 
@@ -99,7 +174,7 @@ public static class Program
             
             _window.PumpEvent();
 
-            scene.Camera.Translate(0.01f * Vector3.UnitZ);
+            scene.Camera.Translate(WalkDirection(keyState, scene.Camera));
             
             renderer.Render(scene);
             
@@ -108,6 +183,7 @@ public static class Program
         
         scene.Dispose();
         renderer.Dispose();
+        materialManager.Dispose();
         meshManager.Dispose();
 
         _window.Dispose();

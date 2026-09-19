@@ -1,10 +1,16 @@
+using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
+using FishPieClient.Maths;
 
 namespace FishPieClient.Graphics;
 
-public class Entity(MeshView meshView)
+public class Entity
 {
 
-    public MeshView MeshView { get; } = meshView;
+    public required MeshView MeshView { get; set; }
+
+    public required Transform Transform { get; set; }
+
+    public required MaterialKey MaterialKey { get; set; }
 
 }

@@ -22,7 +22,7 @@ public class MultiBufferTests
             Assert.That(buffer.Size, Is.EqualTo(dataView.Length * 3));
             Assert.That(buffer.WriteCalls, Is.EquivalentTo(expected));
             Assert.That(buffer.Name, Is.EqualTo("test_buffer"));
-            Assert.That(mb.OriginalSize, Is.EqualTo(dataView.Length));
+            Assert.That(mb.Size, Is.EqualTo(dataView.Length));
         }
 
         mb.Dispose();

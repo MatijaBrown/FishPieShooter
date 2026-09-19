@@ -33,6 +33,7 @@ public enum Key
     Y = 0x59,
     Z = 0x5A,
     Space = Keys.Space,
+    LShift = Keys.ShiftLeft,
     F1 = Keys.F1,
     F2 = Keys.F2,
     F3 = Keys.F3,

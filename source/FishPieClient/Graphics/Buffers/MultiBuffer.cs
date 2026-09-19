@@ -8,11 +8,12 @@ namespace FishPieClient.Graphics.Buffers;
  * through the internal frames.
  */
 public class MultiBuffer<TBuffer, T> : IBuffer<T>
-    where TBuffer : IBuffer<T>
+    where TBuffer : class, IBuffer<T>
     where T : unmanaged
 {
     
     private readonly int _byteSize;
+    private readonly Func<uint, string, GL, TBuffer> _bufferConstructor;
     
     private int _frameOffset;
     
@@ -22,22 +23,26 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
     
     public string Name { get; }
 
-    public uint Handle => Buffer.Handle;
+    public uint Size { get; }
     
-    public uint OriginalSize { get; }
+    public uint Handle => Buffer.Handle;
 
     public int FrameOffsetBytes => _frameOffset * _byteSize;
+
+    public Func<uint, string, GL, IBuffer<T>> InstanceCreator => (size, name, gl)
+        => new MultiBuffer<TBuffer, T>(size, name, gl, _bufferConstructor, Frames);
 
     public MultiBuffer(uint size, string name, GL gl, Func<uint, string, GL, TBuffer> bufferConstructor, int frames = 3)
     {
         Frames = frames;
-        OriginalSize = size;
+        Size = size;
         Name = name;
+        _bufferConstructor = bufferConstructor;
 
         _frameOffset = 0;
         _byteSize = Marshal.SizeOf<T>();
 
-        Buffer = bufferConstructor(size * (uint)frames, name, gl);
+        Buffer = _bufferConstructor(size * (uint)Frames, name, gl);
     }
     
     public void Write(Span<T> data, int offset)
@@ -47,7 +52,7 @@ public class MultiBuffer<TBuffer, T> : IBuffer<T>
 
     public void Advance()
     {
-        _frameOffset = (_frameOffset + (int)OriginalSize) % ((int)OriginalSize * Frames);
+        _frameOffset = (_frameOffset + (int)Size) % ((int)Size * Frames);
     }
 
     public void Dispose()
