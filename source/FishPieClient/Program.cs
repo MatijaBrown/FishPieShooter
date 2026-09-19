@@ -73,14 +73,14 @@ public static class Program
             direction -= camera.Right;
         }
 
-        if (keyState[Key.Q])
+        if (keyState[Key.Space])
         {
-            direction += camera.Up;
+            direction += Vector3.UnitY;
         }
 
-        if (keyState[Key.E])
+        if (keyState[Key.LShift])
         {
-            direction -= camera.Up;
+            direction -= Vector3.UnitY;
         }
 
         const float speed = 0.5f;
@@ -142,7 +142,7 @@ public static class Program
 
         var keyState = new Dictionary<Key, bool>()
         {
-            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }, { Key.E, false }, { Key.Q, false }
+            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }, { Key.Space, false }, { Key.LShift, false }
         };
         
         _window.OnKeyboard += (key, state) =>
