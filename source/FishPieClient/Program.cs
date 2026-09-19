@@ -3,12 +3,14 @@ using System.Numerics;
 using FishPieClient.Core;
 using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
+using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Input;
 using FishPieClient.Maths;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
+using Key = FishPieClient.Input.Key;
 
 namespace FishPieClient;
 
@@ -42,7 +44,7 @@ public static class Program
         ];
         
         return new MeshData(
-            Vertices: positions.ConvertAll(pos => new VertexData(pos, Colour.Azure)),
+            Vertices: positions.ConvertAll(pos => new VertexData(pos)),
             Indices: indices
         );
     }
@@ -71,6 +73,16 @@ public static class Program
             direction -= camera.Right;
         }
 
+        if (keyState[Key.Q])
+        {
+            direction += camera.Up;
+        }
+
+        if (keyState[Key.E])
+        {
+            direction -= camera.Up;
+        }
+
         const float speed = 0.5f;
         return direction == Vector3.Zero ? Vector3.Zero : Vector3.Normalize(direction) * speed;
     }
@@ -92,24 +104,45 @@ public static class Program
         _gl = _window.Gl;
         
         var meshManager = new MeshManager(_gl);
+        var materialManager = new MaterialManager(_gl);
         var renderer = new Renderer(_gl);
-
+        
         var scene = new Scene(
             meshManager: meshManager,
+            materialManager: materialManager,
             camera: new Camera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY,
                 MathF.PI / 4.0f,
                 _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f)
         );
         
+        var materialKeyRed = materialManager.Add(new MaterialData(
+            new Colour(1.0f, 0.0f, 0.0f)
+        ));
+        var materialKeyBlue = materialManager.Add(new MaterialData(
+            new Colour(0.0f, 0.0f, 1.0f)
+        ));
+        var materialKeyGreen = materialManager.Add(new MaterialData(
+            new Colour(0.0f, 1.0f, 0.0f)
+        ));
+        
+        materialManager.Remove(materialKeyBlue);
+        
         scene.Entities.Add(new Entity()
         {
             MeshView = meshManager.Load(Cube()),
-            Transform = new Transform(new Vector3(10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity)
+            Transform = new Transform(new Vector3(10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
+            MaterialKey = materialKeyRed
+        });
+        scene.Entities.Add(new Entity()
+        {
+            MeshView = meshManager.Load(Cube()),
+            Transform = new Transform(new Vector3(-10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
+            MaterialKey = materialKeyGreen
         });
 
         var keyState = new Dictionary<Key, bool>()
         {
-            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }
+            { Key.W, false }, { Key.A, false }, { Key.S, false }, { Key.D, false }, { Key.E, false }, { Key.Q, false }
         };
         
         _window.OnKeyboard += (key, state) =>
@@ -121,10 +154,7 @@ public static class Program
             }
             else
             {
-                if (keyState.ContainsKey(key))
-                {
-                    keyState[key] = state == KeyState.Down;
-                }
+                keyState[key] = state == KeyState.Down;
             }
         };
 
@@ -153,6 +183,7 @@ public static class Program
         
         scene.Dispose();
         renderer.Dispose();
+        materialManager.Dispose();
         meshManager.Dispose();
 
         _window.Dispose();
