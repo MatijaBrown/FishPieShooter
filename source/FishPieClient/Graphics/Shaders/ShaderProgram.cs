@@ -46,6 +46,16 @@ public class ShaderProgram : IDisposable
     {
         _gl.UseProgram(_handle);
     }
+
+    public int GetAttribLocation(string name)
+    {
+        return _gl.GetAttribLocation(_handle, name);
+    }
+
+    public int GetUniformLocation(string name)
+    {
+        return _gl.GetUniformLocation(_handle, name);
+    }
     
     public void Dispose()
     {
