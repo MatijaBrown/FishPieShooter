@@ -14,7 +14,7 @@ namespace FishPieClient.Graphics.Display;
 public sealed class Window : IGLContextSource, IDisposable
 {
 
-    private static unsafe void OpenGLDebugCallback(GLEnum source, GLEnum type, int id, GLEnum severity, int length, nint message, nint userParam)
+    private static void OpenGlDebugCallback(GLEnum source, GLEnum type, int id, GLEnum severity, int length, nint message, nint userParam)
     {
         if (type == GLEnum.DebugTypeError)
         {
@@ -23,8 +23,8 @@ public sealed class Window : IGLContextSource, IDisposable
         }
     }
 
-    private readonly Glfw _glfw;
     private readonly GlfwContext _glfwContext;
+    private readonly IntPtr _invisibleCursor;
     
     private uint _width;
     private uint _height;
@@ -47,7 +47,9 @@ public sealed class Window : IGLContextSource, IDisposable
     public event MouseEvent? OnMouseMove;
 
     public IGLContext? GLContext => _glfwContext;
-    
+
+    public Glfw Glfw { get; }
+
     public uint WindowWidth
     {
         get
@@ -85,47 +87,54 @@ public sealed class Window : IGLContextSource, IDisposable
         _mode = mode;
         _mouseLocked = mouseLocked;
         
-        _glfw = Glfw.GetApi();
+        Glfw = Glfw.GetApi();
 
-        if (!_glfw.Init())
+        if (!Glfw.Init())
         {
             Log.Fatal("Failed to init glfw");
             throw new Exception("Failed to init glfw");
         }
 
-        _glfw.WindowHint(WindowHintBool.Resizable, false);
-        _glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
-        _glfw.WindowHint(WindowHintInt.RedBits, 32);
-        _glfw.WindowHint(WindowHintInt.GreenBits, 32);
-        _glfw.WindowHint(WindowHintInt.BlueBits, 32);
-        _glfw.WindowHint(WindowHintInt.AlphaBits, 32);
-        _glfw.WindowHint(WindowHintInt.DepthBits, 24);
-        _glfw.WindowHint(WindowHintInt.StencilBits, 8);
-        _glfw.WindowHint(WindowHintInt.Samples, 0);
+        Glfw.WindowHint(WindowHintBool.Resizable, false);
+        Glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
+        Glfw.WindowHint(WindowHintInt.RedBits, 32);
+        Glfw.WindowHint(WindowHintInt.GreenBits, 32);
+        Glfw.WindowHint(WindowHintInt.BlueBits, 32);
+        Glfw.WindowHint(WindowHintInt.AlphaBits, 32);
+        Glfw.WindowHint(WindowHintInt.DepthBits, 24);
+        Glfw.WindowHint(WindowHintInt.StencilBits, 8);
+        Glfw.WindowHint(WindowHintInt.Samples, 0);
 
-        _glfw.WindowHint(WindowHintInt.ContextVersionMajor, 4);
-        _glfw.WindowHint(WindowHintInt.ContextVersionMinor, 6);
-        _glfw.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
+        Glfw.WindowHint(WindowHintInt.ContextVersionMajor, 4);
+        Glfw.WindowHint(WindowHintInt.ContextVersionMinor, 6);
+        Glfw.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
 
-        WindowHandle* handle = _glfw.CreateWindow((int)_width, (int)_height, "FPS Window", null, null);
+        WindowHandle* handle = Glfw.CreateWindow((int)_width, (int)_height, "FPS Window", null, null);
         if (handle == null)
         {
-            _glfw.Terminate();
+            Glfw.Terminate();
             Log.Fatal("Failed to create window");
             throw new Exception("Failed to create window");
         }
         NativeHandle = (UIntPtr)handle;
 
-        _glfw.ShowWindow(handle);
+        Glfw.ShowWindow(handle);
 
-        if (_mouseLocked)
+        // Create invisible cursor
+        byte* pixels = stackalloc byte[16 * 16 * 4];
+        var img = new Image()
         {
-            _glfw.SetInputMode(handle, CursorStateAttribute.Cursor, CursorModeValue.CursorDisabled);
-        }
+            Width = 16,
+            Height = 16,
+            Pixels =pixels
+        };
+        var cursorPtr = Glfw.CreateCursor(&img, 0, 0);
+        _invisibleCursor = new IntPtr(cursorPtr);
+        SetMouseLocked(mouseLocked);
         
         SetupEventCallbacks();
         
-        _glfw.MakeContextCurrent(handle);
+        Glfw.MakeContextCurrent(handle);
         
         Gl = CreateOpenGl(out _glfwContext);
 
@@ -158,8 +167,8 @@ public sealed class Window : IGLContextSource, IDisposable
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
         
-        _glfw.SetWindowCloseCallback(handle, _ => OnClose?.Invoke());
-        _glfw.SetKeyCallback(handle, (_, key, keyCode, action, mods) =>
+        Glfw.SetWindowCloseCallback(handle, _ => OnClose?.Invoke());
+        Glfw.SetKeyCallback(handle, (_, key, keyCode, action, mods) =>
         {
             if (action == InputAction.Repeat) return;
 
@@ -169,15 +178,15 @@ public sealed class Window : IGLContextSource, IDisposable
                 OnKeyboard?.Invoke((Key)key, state);
             }
         });
-        _glfw.SetMouseButtonCallback(handle, (_, button, action, mods) =>
+        Glfw.SetMouseButtonCallback(handle, (_, button, action, mods) =>
         {
             if (button == MouseButton.Left)
             {
-                _glfw.GetCursorPos(handle, out double x, out double y);
+                Glfw.GetCursorPos(handle, out double x, out double y);
                 OnMouseButton?.Invoke((float)x, (float)y, action == InputAction.Press ? MouseButtonState.Down : MouseButtonState.Up);
             }
         });
-        _glfw.SetCursorPosCallback(handle, (_, x, y) =>
+        Glfw.SetCursorPosCallback(handle, (_, x, y) =>
         {
             double deltaX = x - _lastMouseX;
             double deltaY = y - _lastMouseY;
@@ -185,21 +194,21 @@ public sealed class Window : IGLContextSource, IDisposable
             _lastMouseY = y;
             OnMouseMove?.Invoke((float)deltaX, (float)deltaY);
         });
-        _glfw.GetCursorPos(handle, out _lastMouseX, out _lastMouseY);
+        Glfw.GetCursorPos(handle, out _lastMouseX, out _lastMouseY);
     }
     
     private unsafe void SetupDebug()
     {
         Gl.Enable(EnableCap.DebugOutput);
         Gl.Enable(EnableCap.DebugOutputSynchronous);
-        Gl.DebugMessageCallback(OpenGLDebugCallback, null);
+        Gl.DebugMessageCallback(OpenGlDebugCallback, null);
     }
 
     private unsafe GL CreateOpenGl(out GlfwContext glfwContext)
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
 
-        glfwContext = new GlfwContext(_glfw, handle, this);
+        glfwContext = new GlfwContext(Glfw, handle, this);
         return GL.GetApi(glfwContext);
     }
 
@@ -207,14 +216,14 @@ public sealed class Window : IGLContextSource, IDisposable
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
 
-        Monitor* monitor = _glfw.GetWindowMonitor(handle);
+        Monitor* monitor = Glfw.GetWindowMonitor(handle);
         if (monitor == null)
         {
             Log.Fatal("Failed to get monitor");
             throw new Exception("Failed to get monitor");
         }
 
-        _glfw.GetMonitorWorkarea(monitor, out left, out top, out right, out bottom);
+        Glfw.GetMonitorWorkarea(monitor, out left, out top, out right, out bottom);
     }
 
     private unsafe void SetMode(WindowMode mode)
@@ -225,16 +234,16 @@ public sealed class Window : IGLContextSource, IDisposable
         VideoMode* videoMode;
         if (_mode == WindowMode.Fullscreen && mode == WindowMode.Windowed)
         {
-            monitor = _glfw.GetWindowMonitor(handle);
-            videoMode = _glfw.GetVideoMode(monitor);
-            _glfw.SetWindowMonitor(handle, null, (int)(videoMode->Width + _width) / 2,
+            monitor = Glfw.GetWindowMonitor(handle);
+            videoMode = Glfw.GetVideoMode(monitor);
+            Glfw.SetWindowMonitor(handle, null, (int)(videoMode->Width + _width) / 2,
                 (int)(videoMode->Height + _height) / 2,  (int)_width, (int)_height,videoMode->RefreshRate);
         }
         else if (_mode == WindowMode.Windowed && mode == WindowMode.Fullscreen)
         {
-            monitor = _glfw.GetPrimaryMonitor();
-            videoMode = _glfw.GetVideoMode(monitor);
-            _glfw.SetWindowMonitor(handle, monitor, 0, 0, videoMode->Width, videoMode->Height,
+            monitor = Glfw.GetPrimaryMonitor();
+            videoMode = Glfw.GetVideoMode(monitor);
+            Glfw.SetWindowMonitor(handle, monitor, 0, 0, videoMode->Width, videoMode->Height,
                 videoMode->RefreshRate);
         }
         _mode = mode;
@@ -247,26 +256,41 @@ public sealed class Window : IGLContextSource, IDisposable
         
         WindowHandle* handle = (WindowHandle*)NativeHandle;
         
-        _glfw.DestroyWindow(handle);
-        _glfw.Dispose();
+        Glfw.DestroyWindow(handle);
+        Glfw.Dispose();
     }
 
     public void PumpEvent()
     {
-        _glfw.PollEvents();
+        Glfw.PollEvents();
     }
 
     public unsafe void Swap()
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
         
-        _glfw.SwapBuffers(handle);
+        Glfw.SwapBuffers(handle);
     }
 
     public unsafe void SetWindowTitle(string title)
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
-        _glfw.SetWindowTitle(handle, title);
+        Glfw.SetWindowTitle(handle, title);
+    }
+
+    public unsafe void SetMouseLocked(bool mouseLocked)
+    {
+        WindowHandle* handle = (WindowHandle*)NativeHandle;
+        _mouseLocked = mouseLocked;
+        if (_mouseLocked)
+        {
+            Glfw.SetCursor(handle, (Cursor*)_invisibleCursor.ToPointer());
+            Glfw.SetInputMode(handle, CursorStateAttribute.Cursor, CursorModeValue.CursorDisabled);
+        }
+        else
+        {
+            Glfw.SetInputMode(handle, CursorStateAttribute.Cursor, CursorModeValue.CursorNormal);
+        }
     }
 
 }
