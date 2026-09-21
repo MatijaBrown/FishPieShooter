@@ -1,3 +1,4 @@
+using System.Numerics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.UI.ImGuiImpl;
 using FishPieClient.Input;
@@ -46,11 +47,33 @@ public sealed class DebugUi : IDisposable
 
     public void Render(Scene scene)
     {
+        var io = ImGui.GetIO();
+        
         _openglImpl.NewFrame();
         _glfwImpl.NewFrame();
         ImGui.NewFrame();
 
-        ImGui.ShowDemoWindow();
+        ImGui.LabelText($"FPS {io.Framerate:F1}", "");
+
+        foreach (var entity in scene.Entities)
+        {
+            var material = scene.MaterialManager[entity.MaterialKey];
+            
+            if (ImGui.CollapsingHeader(entity.Name))
+            {
+                var colour = (Vector3)material.Colour;
+                
+                var label = $"{entity.Name} colour";
+                
+                if (ImGui.ColorPicker3(label, ref colour))
+                {
+                    scene.MaterialManager[entity.MaterialKey] = material with
+                    {
+                        Colour = (Colour)colour
+                    };
+                }
+            }
+        }
         
         ImGui.Render();
         _openglImpl.RenderDrawData(ImGui.GetDrawData());
