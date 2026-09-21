@@ -5,6 +5,7 @@ using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
+using FishPieClient.Graphics.UI;
 using FishPieClient.Input;
 using FishPieClient.Maths;
 using FishPieClient.Utils;
@@ -107,6 +108,9 @@ public static class Program
         var materialManager = new MaterialManager(_gl);
         var renderer = new Renderer(_gl);
         
+        var debugUi = new DebugUi(_window, _gl);
+        bool debugMode = false;
+        
         var scene = new Scene(
             meshManager: meshManager,
             materialManager: materialManager,
@@ -152,6 +156,13 @@ public static class Program
                 Log.Information("stopping");
                 _running = false;
             }
+            if (key == Key.F1 && state == KeyState.Down)
+            {
+                debugMode = !debugMode;
+                if (debugMode) debugUi.Activate();
+                else debugUi.Deactivate();
+                _window.SetMouseLocked(!debugMode);
+            }
             else
             {
                 keyState[key] = state == KeyState.Down;
@@ -161,11 +172,14 @@ public static class Program
         _window.OnMouseMove += (deltaX, deltaY) =>
         {
             const float sensitivity = 0.002f;
-            
-            var dx = deltaX * sensitivity;
-            var dy = deltaY * sensitivity;
-            scene.Camera.AdjustYaw(dx);
-            scene.Camera.AdjustPitch(-dy);
+
+            if (!debugMode)
+            {
+                var dx = deltaX * sensitivity;
+                var dy = deltaY * sensitivity;
+                scene.Camera.AdjustYaw(dx);
+                scene.Camera.AdjustPitch(-dy); 
+            }
         };
         
         while (_running)
@@ -177,11 +191,17 @@ public static class Program
             scene.Camera.Translate(WalkDirection(keyState, scene.Camera));
             
             renderer.Render(scene);
+
+            if (debugMode)
+            {
+                debugUi.Render(scene);
+            }
             
             _window.Swap();
         }
         
         scene.Dispose();
+        debugUi.Dispose();
         renderer.Dispose();
         materialManager.Dispose();
         meshManager.Dispose();
