@@ -133,12 +133,14 @@ public static class Program
         
         scene.Entities.Add(new Entity()
         {
+            Name = "cube1",
             MeshView = meshManager.Load(Cube()),
             Transform = new Transform(new Vector3(10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
             MaterialKey = materialKeyRed
         });
         scene.Entities.Add(new Entity()
         {
+            Name = "cube2",
             MeshView = meshManager.Load(Cube()),
             Transform = new Transform(new Vector3(-10.0f, 0.0f, -10.0f), 5.0f * Vector3.One, Quaternion.Identity),
             MaterialKey = materialKeyGreen
