@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 namespace FishPieClient.Graphics.Materials;
 
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct MaterialData(Colour colour)
+public struct MaterialData(Colour colour)
 {
 
-    public readonly Colour Colour = colour;
+    public Colour Colour = colour;
 
 }
