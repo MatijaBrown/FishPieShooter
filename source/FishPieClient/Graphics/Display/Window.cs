@@ -45,6 +45,7 @@ public sealed class Window : IGLContextSource, IDisposable
     public event KeyEvent? OnKeyboard;
     public event MouseButtonEvent? OnMouseButton;
     public event MouseEvent? OnMouseMove;
+    public event WindowResizeEvent? OnResize;
 
     public IGLContext? GLContext => _glfwContext;
 
@@ -95,7 +96,6 @@ public sealed class Window : IGLContextSource, IDisposable
             throw new Exception("Failed to init glfw");
         }
 
-        Glfw.WindowHint(WindowHintBool.Resizable, false);
         Glfw.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGL);
         Glfw.WindowHint(WindowHintInt.RedBits, 32);
         Glfw.WindowHint(WindowHintInt.GreenBits, 32);
@@ -167,6 +167,13 @@ public sealed class Window : IGLContextSource, IDisposable
         WindowHandle* handle = (WindowHandle*)NativeHandle;
         
         Glfw.SetWindowCloseCallback(handle, _ => OnClose?.Invoke());
+        Glfw.SetWindowSizeCallback(handle, (_, width, height) =>
+        {
+            _width = (uint)width;
+            _height = (uint)height;
+
+            OnResize?.Invoke(_width, _height);
+        });
         Glfw.SetKeyCallback(handle, (_, key, keyCode, action, mods) =>
         {
             if (action == InputAction.Repeat) return;
