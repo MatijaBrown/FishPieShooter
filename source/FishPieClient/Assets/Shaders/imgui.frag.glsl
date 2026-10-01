@@ -1,4 +1,4 @@
-#version 330
+#version 410 core
 
 in vec2 pass_uv;
 in vec4 pass_colour;
