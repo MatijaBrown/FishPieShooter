@@ -145,7 +145,6 @@ public sealed class Window : IGLContextSource, IDisposable
         
         Gl.Enable(EnableCap.DepthTest);
         Gl.Enable(EnableCap.Blend);
-        Gl.Enable(EnableCap.Multisample);
         Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
         SetMode(mode);
