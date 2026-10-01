@@ -90,24 +90,12 @@ public sealed class DebugUi : IDisposable
                 var transform = (Matrix4x4)entity.Transform;
                 var cameraData = scene.Camera.Data;
                 
-                Matrix4x4.Decompose(transform, out var s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("Begin");
-                }
-                
                 ImGuizmo.Manipulate(cameraData.View,
                     cameraData.Projection,
                     ImGuizmoOperation.Translate | ImGuizmoOperation.Scale | ImGuizmoOperation.Rotate,
                     ImGuizmoMode.World,
                     ref transform,
                     out _);
-                
-                Matrix4x4.Decompose(transform, out s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("End");
-                }
 
                 entity.Transform.FromMatrix(transform);
             }

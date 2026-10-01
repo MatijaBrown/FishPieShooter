@@ -1570,22 +1570,9 @@ public static class ImGuizmo
     public static bool Manipulate(Matrix4x4 view, Matrix4x4 projection, ImGuizmoOperation operation, ImGuizmoMode mode,
         ref Matrix4x4 matrix, out Matrix4x4 deltaMatrix)
     {
-        Vector3 s;
         _drawList.PushClipRect(new Vector2(_x, _y), new Vector2(_x + _width, _y + _height), false);
         
-        Matrix4x4.Decompose(matrix, out s, out _, out _);
-        if (MathF.Abs(s.X - 1.0f) < 0.01f)
-        {
-            Console.WriteLine("Before Compute context");
-        }
-        
         ComputeContext(view, projection, ref matrix, (operation & ImGuizmoOperation.Scale) != 0 ? ImGuizmoMode.Local : mode);
-        
-        Matrix4x4.Decompose(matrix, out s, out _, out _);
-        if (MathF.Abs(s.X - 1.0f) < 0.01f)
-        {
-            Console.WriteLine("After Compute context");
-        }
         
         deltaMatrix = Matrix4x4.Identity;
         
@@ -1602,46 +1589,12 @@ public static class ImGuizmo
         {
             if (!_usingBounds)
             {
-                Matrix4x4.Decompose(matrix, out s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("Before Handle");
-                }
-                
-                manipulated = HandleTranslation(ref matrix, ref deltaMatrix, operation, ref type);
-                
-                
-                Matrix4x4.Decompose(matrix, out s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("After Handle Translation");
-                }
-                
-                manipulated |= HandleScale(ref matrix, ref deltaMatrix, operation, ref type);
-                
-                
-                Matrix4x4.Decompose(matrix, out s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("After Handle Scale");
-                }
-                
-                manipulated |= HandleRotation(ref matrix, ref deltaMatrix, operation, ref type);
-                
-                Matrix4x4.Decompose(matrix, out s, out _, out _);
-                if (MathF.Abs(s.X - 1.0f) < 0.01f)
-                {
-                    Console.WriteLine("After Handle Rotate");
-                }
+                manipulated = HandleTranslation(ref matrix, ref deltaMatrix, operation, ref type)
+                    || HandleScale(ref matrix, ref deltaMatrix, operation, ref type)
+                    || HandleRotation(ref matrix, ref deltaMatrix, operation, ref type);
             }
         }
 
-        Matrix4x4.Decompose(matrix, out s, out _, out _);
-        if (MathF.Abs(s.X - 1.0f) < 0.01f)
-        {
-            Console.WriteLine("After Handle");
-        }
-        
         // TODO: Local bounds
         
         _operation = operation;
