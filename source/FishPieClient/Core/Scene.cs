@@ -1,9 +1,7 @@
-using FishPieClient.Core;
 using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
-using Silk.NET.OpenGL;
 
-namespace FishPieClient.Graphics;
+namespace FishPieClient.Core;
 
 public class Scene : IDisposable
 {

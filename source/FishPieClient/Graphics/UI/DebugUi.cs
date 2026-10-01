@@ -1,4 +1,5 @@
 using System.Numerics;
+using FishPieClient.Core;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.UI.ImGuiImpl;
 using FishPieClient.Input;
