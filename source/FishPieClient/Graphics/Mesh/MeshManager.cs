@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using FishPieClient.Graphics.Buffers;
+using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
 
@@ -41,12 +42,12 @@ public class MeshManager : IDisposable
         _indexDataGpu = Utils.ResizeGpuBuffer(_indexDataCpu, _indexDataGpu, _gl);
         var indexDataView = CollectionsMarshal.AsSpan(_indexDataCpu);
         _indexDataGpu.Write(indexDataView, 0);
-
+        
         return new MeshView(
             IndexOffset: (uint)indexOffset,
-            IndexCount: (uint)meshData.Indices.Count,
+            Indices: _indexDataCpu.AsMemory(indexOffset, meshData.Indices.Count),
             VertexOffset: (uint)vertexOffset,
-            VertexCount: (uint)meshData.Vertices.Count
+            Vertices: _vertexDataCpu.AsMemory(vertexOffset, meshData.Vertices.Count)
         );
     }
 

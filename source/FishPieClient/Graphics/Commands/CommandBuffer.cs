@@ -27,7 +27,7 @@ public class CommandBuffer : IDisposable
     {
         var commands = scene.Entities.ConvertAll(e =>
             new IndirectCommand(
-                Count: e.MeshView.IndexCount,
+                Count: (uint)e.MeshView.Indices.Length,
                 InstanceCount: 1,
                 First: e.MeshView.IndexOffset,
                 BaseVertex: (int)e.MeshView.VertexOffset,
