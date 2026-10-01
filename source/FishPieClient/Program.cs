@@ -96,13 +96,17 @@ public static class Program
         Log.Information("{OSVersion}", Environment.OSVersion.ToString());
 
         _window = new Window(WindowMode.Windowed, 1920, 1080, 1920, 0, mouseLocked: true);
+        _gl = _window.Gl;
+        
         _window.OnClose += () =>
         {
             Log.Information("stopping");
             _running = false;
         };
-        
-        _gl = _window.Gl;
+        _window.OnResize += (width, height) =>
+        {
+            _gl.Viewport(0, 0, width, height);
+        };
         
         var meshManager = new MeshManager(_gl);
         var materialManager = new MaterialManager(_gl);
@@ -161,8 +165,6 @@ public static class Program
             if (key == Key.F1 && state == KeyState.Down)
             {
                 debugMode = !debugMode;
-                if (debugMode) debugUi.Activate();
-                else debugUi.Deactivate();
                 _window.SetMouseLocked(!debugMode);
             }
             else
@@ -181,6 +183,14 @@ public static class Program
                 var dy = deltaY * sensitivity;
                 scene.Camera.AdjustYaw(dx);
                 scene.Camera.AdjustPitch(-dy); 
+            }
+        };
+
+        _window.OnMouseButton += (x, y, state) =>
+        {
+            if (debugMode)
+            {
+                debugUi.AddMouseEvent(x, y, state);
             }
         };
         
