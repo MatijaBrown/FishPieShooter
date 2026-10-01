@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Serilog;
+using Silk.NET.OpenGL;
 
 namespace FishPieClient.Utils;
 
@@ -22,6 +23,16 @@ public static class Errors
         if (!predicate)
         {
             throw new Exception(msg);
+        }
+    }
+    
+    public static void CheckGlError(string location, GL gl)
+    {
+        GLEnum err;
+        while ((err = gl.GetError()) != GLEnum.NoError)
+        {
+            Log.Error($"GL Error {err} at \"{location}\"");
+            throw new Exception($"GL Error {err} at \"{location}\"");
         }
     }
     

@@ -36,6 +36,17 @@ public sealed class MaterialManager : IDisposable
         return key;
     }
 
+    public MaterialData this[MaterialKey materialKey]
+    {
+        get
+        {
+            Errors.Expect(_materialDataCpu.TryGetValue(materialKey, out var element),
+                $"key {materialKey} does not exist");
+            return element;
+        }
+        set => _materialDataCpu[materialKey] = value;
+    }
+    
     public void Remove(MaterialKey materialKey)
     {
         _materialDataCpu.Remove(materialKey);

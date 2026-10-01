@@ -7,6 +7,8 @@ namespace FishPieClient.Graphics;
 public class Entity
 {
 
+    public required string Name { get; init; }
+    
     public required MeshView MeshView { get; set; }
 
     public required Transform Transform { get; set; }

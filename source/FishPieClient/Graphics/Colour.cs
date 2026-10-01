@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace FishPieClient.Graphics;
@@ -17,4 +18,15 @@ public struct Colour(float r, float g, float b)
     {
         return $"r={R} g={G} b={B}";
     }
+    
+    public static explicit operator Vector3(Colour colour)
+    {
+        return new Vector3(colour.R, colour.G, colour.B);
+    }
+
+    public static explicit operator Colour(Vector3 vector)
+    {
+        return new Colour(vector.X, vector.Y, vector.Z);
+    }
+    
 }
