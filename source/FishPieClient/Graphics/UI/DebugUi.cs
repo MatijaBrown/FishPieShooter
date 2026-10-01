@@ -1,8 +1,10 @@
 using System.Numerics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.UI.ImGuiImpl;
-using FishPieClient.Input;
-using ImGuiNET;
+using FishPieClient.Maths;
+using Hexa.NET.ImGui;
+using ImGuizmoSharp;
+using Serilog;
 using Silk.NET.OpenGL;
 
 namespace FishPieClient.Graphics.UI;
@@ -10,61 +12,73 @@ namespace FishPieClient.Graphics.UI;
 public sealed class DebugUi : IDisposable
 {
 
-    private readonly IntPtr _context;
-
-    private readonly ImGuiImplGlfw _glfwImpl;
-    private readonly ImGuiImplOpenGl _openglImpl;
+    private readonly ImGuiContextPtr _context;
     
     private readonly Window _window;
-    
-    public DebugUi(Window window, GL gl)
+
+    public unsafe DebugUi(Window window, GL gl)
     {
         _window = window;
-        
+
         _context = ImGui.CreateContext();
         ImGui.SetCurrentContext(_context);
-        
+
         var io = ImGui.GetIO();
-        
         io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
-        io.MouseDrawCursor = io.WantCaptureMouse;
-        
+        io.ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;
+        //io.ConfigFlags |= ImGuiConfigFlags.DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
+
         ImGui.StyleColorsDark();
 
-        _glfwImpl = new ImGuiImplGlfw(_window, _context);
-        _openglImpl = new ImGuiImplOpenGl(_context, gl);
+        if (!ImGuiImplGlfw.Init(_window, true))
+        {
+            Log.Error("Failed to init ImGui Impl Glfw");
+            return;
+        }
+        
+        if (!ImGuiImplOpenGl.Init(gl))
+        {
+            Log.Error("Failed to init ImGui OpenGL3");
+            return;
+        }
     }
 
     public void Activate()
     {
-        _glfwImpl.InstallCallbacks();
+        
     }
 
     public void Deactivate()
     {
-        _glfwImpl.UninstallCallbacks();
+        
     }
 
-    public void Render(Scene scene)
+    public unsafe void Render(Scene scene)
     {
         var io = ImGui.GetIO();
         
-        _openglImpl.NewFrame();
-        _glfwImpl.NewFrame();
+        ImGuiImplOpenGl.NewFrame();
+        ImGuiImplGlfw.NewFrame();
         ImGui.NewFrame();
 
+        ImGuizmo.SetOrthographic(false);
+        ImGuizmo.BeginFrame();
+        ImGuizmo.Enable(true);
+        ImGuizmo.SetRect(0, 0, io.DisplaySize.X, io.DisplaySize.Y);
+        
         ImGui.LabelText($"FPS {io.Framerate:F1}", "");
 
         foreach (var entity in scene.Entities)
         {
             var material = scene.MaterialManager[entity.MaterialKey];
-            
+
             if (ImGui.CollapsingHeader(entity.Name))
             {
                 var colour = (Vector3)material.Colour;
                 
                 var label = $"{entity.Name} colour";
-                
+
                 if (ImGui.ColorPicker3(label, ref colour))
                 {
                     scene.MaterialManager[entity.MaterialKey] = material with
@@ -72,18 +86,44 @@ public sealed class DebugUi : IDisposable
                         Colour = (Colour)colour
                     };
                 }
+
+                var transform = (Matrix4x4)entity.Transform;
+                var cameraData = scene.Camera.Data;
+                
+                Matrix4x4.Decompose(transform, out var s, out _, out _);
+                if (MathF.Abs(s.X - 1.0f) < 0.01f)
+                {
+                    Console.WriteLine("Begin");
+                }
+                
+                ImGuizmo.Manipulate(cameraData.View,
+                    cameraData.Projection,
+                    ImGuizmoOperation.Translate | ImGuizmoOperation.Scale | ImGuizmoOperation.Rotate,
+                    ImGuizmoMode.World,
+                    ref transform,
+                    out _);
+                
+                Matrix4x4.Decompose(transform, out s, out _, out _);
+                if (MathF.Abs(s.X - 1.0f) < 0.01f)
+                {
+                    Console.WriteLine("End");
+                }
+
+                entity.Transform.FromMatrix(transform);
             }
         }
         
         ImGui.Render();
-        _openglImpl.RenderDrawData(ImGui.GetDrawData());
+        ImGuiImplOpenGl.RenderDrawData(ImGui.GetDrawData());
     }
     
     public void Dispose()
     {
-        _openglImpl.Dispose();
-        _glfwImpl.Dispose();
-        ImGui.DestroyContext();
+        ImGuiImplOpenGl.Shutdown();
+        ImGuiImplGlfw.Shutdown();
+        
+        ImGui.DestroyPlatformWindows();
+        ImGui.DestroyContext(_context);
     }
     
 }
