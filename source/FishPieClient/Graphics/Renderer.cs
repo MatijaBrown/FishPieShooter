@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using FishPieClient.Core;
 using FishPieClient.Graphics.Buffers;
@@ -70,7 +71,7 @@ public sealed class Renderer : IDisposable
             var index = scene.MaterialManager.Index(e.MaterialKey);
             
             return new ObjectData(
-                model: e.Transform,
+                model: (Matrix4x4)e.Transform,
                 materialIdIndex: index
             );
         });
