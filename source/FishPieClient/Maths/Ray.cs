@@ -10,10 +10,10 @@ public readonly struct Ray(Vector3 origin, Vector3 direction)
 
     public float? Intersects(Vector3 v0, Vector3 v1, Vector3 v2)
     {
-        return Intersects(this, v0, v1, v2);
+        return Intersect(this, v0, v1, v2);
     }
     
-    public static float? Intersects(Ray ray, Vector3 v0, Vector3 v1, Vector3 v2)
+    public static float? Intersect(Ray ray, Vector3 v0, Vector3 v1, Vector3 v2)
     {
         var edge1 = v1 - v0;
         var edge2 = v2 - v0;
