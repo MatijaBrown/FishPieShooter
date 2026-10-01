@@ -10,7 +10,7 @@ public static class Logging
     {
         var config = new LoggerConfiguration()
             .WriteTo.Console(
-                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] Fish Pie: {Message}{NewLine}{Exception}",
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] Fish Pie: {Message:l}{NewLine}{Exception}",
                 theme: AnsiConsoleTheme.Code
         );
 
