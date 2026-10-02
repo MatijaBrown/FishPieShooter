@@ -1,12 +1,10 @@
 using System.Runtime.InteropServices;
 using FishPieClient.Graphics.Buffers;
-using FishPieClient.Utils;
-using Serilog;
 using Silk.NET.OpenGL;
 
 namespace FishPieClient.Graphics.Mesh;
 
-public class MeshManager : IDisposable
+public sealed class MeshManager : IDisposable
 {
 
     private readonly List<VertexData> _vertexDataCpu;
@@ -45,10 +43,20 @@ public class MeshManager : IDisposable
         
         return new MeshView(
             IndexOffset: (uint)indexOffset,
-            Indices: _indexDataCpu.AsMemory(indexOffset, meshData.Indices.Count),
+            IndexCount: (uint)meshData.Indices.Count,
             VertexOffset: (uint)vertexOffset,
-            Vertices: _vertexDataCpu.AsMemory(vertexOffset, meshData.Vertices.Count)
+            VertexCount: (uint)meshData.Vertices.Count
         );
+    }
+
+    public Span<uint> IndexData(MeshView view)
+    {
+        return CollectionsMarshal.AsSpan(_indexDataCpu).Slice((int)view.IndexOffset, (int)view.IndexCount);
+    }
+
+    public Span<VertexData> VertexData(MeshView view)
+    {
+        return CollectionsMarshal.AsSpan(_vertexDataCpu).Slice((int)view.VertexOffset, (int)view.VertexCount);
     }
 
     public override string ToString()

@@ -5,7 +5,7 @@ namespace FishPieClient.Graphics.Mesh;
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct MeshView(
     uint IndexOffset,
-    Memory<uint> Indices,
+    uint IndexCount,
     uint VertexOffset,
-    Memory<VertexData> Vertices
+    uint VertexCount
 );

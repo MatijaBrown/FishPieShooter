@@ -5,7 +5,7 @@ using FishPieClient.Maths;
 
 namespace FishPieClient.Core;
 
-public class Scene : IDisposable
+public sealed class Scene : IDisposable
 {
 
     public List<Entity> Entities { get; } = [];
@@ -26,20 +26,20 @@ public class Scene : IDisposable
     public IntersectionResult? IntersectRay(Ray ray)
     {
         IntersectionResult? result = null;
-        float minDistance = float.MaxValue;
+        float minDistance = float.PositiveInfinity;
         
         foreach (var entity in Entities)
         {
             Matrix4x4.Invert((Matrix4x4)entity.Transform, out var invTransform);
             var transformedRay = new Ray(
                 Vector3.Transform(ray.Origin, invTransform),
-                Vector3.Transform(ray.Direction, invTransform)
+                Vector3.TransformNormal(ray.Direction, invTransform)
             );
 
-            var indices = entity.MeshView.Indices.Span;
-            var vertices = entity.MeshView.Vertices.Span;
+            var indices = MeshManager.IndexData(entity.MeshView);
+            var vertices = MeshManager.VertexData(entity.MeshView);
             
-            for (int i = 0; i < entity.MeshView.Indices.Length; i += 3)
+            for (int i = 0; i < entity.MeshView.IndexCount; i += 3)
             {
                 var v0 = vertices[(int)indices[i + 0]].Position;
                 var v1 = vertices[(int)indices[i + 1]].Position;
