@@ -45,6 +45,8 @@
       <EmbeddedResource Include="Assets\Shaders\imgui.frag.glsl" />
       <None Remove="Assets\Shaders\imgui.vert.glsl" />
       <EmbeddedResource Include="Assets\Shaders\imgui.vert.glsl" />
+      <None Remove="Assets\Shaders\debug.vert.glsl" />
+      <None Remove="Assets\Shaders\debug.frag.glsl" />
     </ItemGroup>
 
     <ItemGroup>
