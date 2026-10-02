@@ -5,6 +5,7 @@ using FishPieClient.Graphics.Shaders;
 using FishPieClient.Graphics.UI.ImGuiImpl;
 using FishPieClient.Input;
 using FishPieClient.Maths;
+using FishPieClient.Utils;
 using Hexa.NET.ImGui;
 using ImGuizmoSharp;
 using Serilog;
@@ -122,6 +123,14 @@ public sealed class DebugUi : IDisposable
             }
         }
         
+        ImGui.Begin("Log");
+        
+        ImGui.BeginChild("Log Output");
+        Logging.ImGuiSink.DrawToImGui();
+        ImGui.EndChild();
+        
+        ImGui.End();
+
         ImGui.Render();
         ImGuiImplOpenGl.RenderDrawData(ImGui.GetDrawData());
         
