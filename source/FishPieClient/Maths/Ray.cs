@@ -21,30 +21,24 @@ public readonly struct Ray(Vector3 origin, Vector3 direction)
         var h = Vector3.Cross(ray.Direction, edge2);
         var a = Vector3.Dot(edge1, h);
 
-        if (MathF.Abs(a) < float.Epsilon)
-        {
+        if (MathF.Abs(a) < 1e-4f)
             return null;
-        }
 
         var f = 1.0f / a;
         var s = ray.Origin - v0;
         var u = f * Vector3.Dot(s, h);
         
         if (u is < 0.0f or > 1.0f)
-        {
             return null;
-        }
 
         var q = Vector3.Cross(s, edge1);
         var v = f * Vector3.Dot(ray.Direction, q);
 
         if (v < 0.0f || u + v > 1.0f)
-        {
             return null;
-        }
 
         var t = f * Vector3.Dot(edge2, q);
-        return t > float.Epsilon ? t : null;
+        return t > 1e-4f ? t : null;
     }
     
 }
