@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using FishPieClient.Core;
 using FishPieClient.Graphics.Buffers;
 using Serilog;
 using Silk.NET.OpenGL;

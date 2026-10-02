@@ -2,7 +2,7 @@ using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
 using FishPieClient.Maths;
 
-namespace FishPieClient.Graphics;
+namespace FishPieClient.Core;
 
 public class Entity
 {
