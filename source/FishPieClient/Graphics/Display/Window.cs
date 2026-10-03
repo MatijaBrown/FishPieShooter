@@ -7,6 +7,7 @@ using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
 using Silk.NET.GLFW;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ARB;
 using Monitor = Silk.NET.GLFW.Monitor;
 
 namespace FishPieClient.Graphics.Display;
@@ -39,7 +40,7 @@ public sealed class Window : IGLContextSource, IDisposable
 
     public uint RenderHeight => _height;
 
-    public GL Gl { get; }
+    public GlApi GlApi { get; }
     
     public event WindowCloseEvent? OnClose;
     public event KeyEvent? OnKeyboard;
@@ -136,30 +137,30 @@ public sealed class Window : IGLContextSource, IDisposable
         
         Glfw.MakeContextCurrent(handle);
         
-        Gl = CreateOpenGl(out _glfwContext);
+        GlApi = CreateOpenGl(out _glfwContext);
 
         if (ProjectUtils.OpenGlDebugEnabled)
         {
             SetupDebug();
         }
         
-        Gl.Enable(EnableCap.DepthTest);
-        Gl.Enable(EnableCap.Blend);
-        Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GlApi.Gl.Enable(EnableCap.DepthTest);
+        GlApi.Gl.Enable(EnableCap.Blend);
+        GlApi.Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         
         SetMode(mode);
 
-        string? vendor = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Vendor));
-        string? renderer = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Renderer));
-        string? version = SilkMarshal.PtrToString((nint)Gl.GetString(StringName.Version));
+        string vendor = GlApi.Gl.GetStringS(StringName.Vendor);
+        string renderer = GlApi.Gl.GetStringS(StringName.Renderer);
+        string version = GlApi.Gl.GetStringS(StringName.Version);
         
         Log.Information("Created new window {Width} {Height} {WindowMode} {Vendor} {Renderer} {Version}",
             _width,
             _height,
             _mode,
-            vendor ?? "(unavailable)",
-            renderer ?? "(unavailable)",
-            version ?? "(unavailable)");
+            vendor,
+            renderer,
+            version);
     }
 
     private unsafe void SetupEventCallbacks()
@@ -205,17 +206,29 @@ public sealed class Window : IGLContextSource, IDisposable
     
     private unsafe void SetupDebug()
     {
-        Gl.Enable(EnableCap.DebugOutput);
-        Gl.Enable(EnableCap.DebugOutputSynchronous);
-        Gl.DebugMessageCallback(OpenGlDebugCallback, null);
+        GlApi.Gl.Enable(EnableCap.DebugOutput);
+        GlApi.Gl.Enable(EnableCap.DebugOutputSynchronous);
+        GlApi.Gl.DebugMessageCallback(OpenGlDebugCallback, null);
     }
 
-    private unsafe GL CreateOpenGl(out GlfwContext glfwContext)
+    private unsafe GlApi CreateOpenGl(out GlfwContext glfwContext)
     {
         WindowHandle* handle = (WindowHandle*)NativeHandle;
-
         glfwContext = new GlfwContext(Glfw, handle, this);
-        return GL.GetApi(glfwContext);
+        
+        // OpenGL core
+        var gl = GL.GetApi(glfwContext);
+        Log.Information("Core OpenGL-API initialized");
+        
+        // Bindless Textures
+        if (!gl.TryGetExtension<ArbBindlessTexture>(out var bindlessTexture))
+        {
+            Log.Fatal("Failed to load extension \"{ArbBindlessTexturesName}\"!", ArbBindlessTexture.ExtensionName);
+            throw new NotSupportedException($"Failed to load extension \"{ArbBindlessTexture.ExtensionName}\"!");
+        }
+        Log.Information("Loaded OpenGL-Extension \"{ExtensionName}\"", ArbBindlessTexture.ExtensionName);
+        
+        return new GlApi(gl, bindlessTexture);
     }
 
     private unsafe void GetMonitorInfo(out int left, out int top, out int right, out int bottom)
@@ -257,7 +270,7 @@ public sealed class Window : IGLContextSource, IDisposable
 
     public unsafe void Dispose()
     {
-        Gl.Dispose();
+        GlApi.Dispose();
         _glfwContext.Dispose();
         
         WindowHandle* handle = (WindowHandle*)NativeHandle;
