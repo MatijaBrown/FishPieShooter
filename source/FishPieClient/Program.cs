@@ -5,13 +5,18 @@ using FishPieClient.Graphics;
 using FishPieClient.Graphics.Display;
 using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
+using FishPieClient.Graphics.Textures;
 using FishPieClient.Graphics.UI;
 using FishPieClient.Input;
 using FishPieClient.Maths;
+using FishPieClient.Resources;
 using FishPieClient.Utils;
 using Serilog;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ARB;
 using Key = FishPieClient.Input.Key;
+using Sampler = FishPieClient.Graphics.Textures.Sampler;
+using Texture = FishPieClient.Graphics.Textures.Texture;
 
 namespace FishPieClient;
 
@@ -21,8 +26,19 @@ public static class Program
     private static Window? _window;
     private static bool _running = true;
 
-    private static GL? _gl;
+    private static GlApi? _glApi;
 
+    private static List<VertexData> Vertices(List<Vector3> positions, List<Vector2> uvs)
+    {
+        var vertices = new List<VertexData>(positions.Count);
+        foreach (var (pos, uv) in positions.Zip(uvs))
+        {
+            vertices.Add(new VertexData(pos, uv));
+        }
+
+        return vertices;
+    }
+    
     private static MeshData Cube()
     {
         List<Vector3> positions =
@@ -37,6 +53,13 @@ public static class Program
             new(-1.0f, -1.0f, -1.0f),    new(1.0f, -1.0f, -1.0f),     new(1.0f, -1.0f, 1.0f)
         ];
 
+        List<Vector2> uvs =
+        [
+            Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY, Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY,
+            Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY, Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY,
+            Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY, Vector2.Zero, Vector2.UnitX, Vector2.One, Vector2.UnitY
+        ];
+
         List<uint> indices =
         [
             0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8,
@@ -45,7 +68,7 @@ public static class Program
         ];
         
         return new MeshData(
-            Vertices: positions.ConvertAll(pos => new VertexData(pos)),
+            Vertices: Vertices(positions, uvs),
             Indices: indices
         );
     }
@@ -96,7 +119,7 @@ public static class Program
         Log.Information("{OSVersion}", Environment.OSVersion.ToString());
 
         _window = new Window(WindowMode.Windowed, 1920, 1080, 1920, 0, mouseLocked: true);
-        _gl = _window.Gl;
+        _glApi = _window.GlApi;
         
         _window.OnClose += () =>
         {
@@ -105,14 +128,20 @@ public static class Program
         };
         _window.OnResize += (width, height) =>
         {
-            _gl.Viewport(0, 0, width, height);
+            _glApi.Gl.Viewport(0, 0, width, height);
         };
+
+        var resourceLoader = new FileResourceLoader("./Assets");
+        var sandedMetalAlbedoData = resourceLoader.LoadBytes("Textures/sanded_metal/albedo.jpg");
+        var sandedMetalAlbedo = Graphics.Utils.LoadTexture(sandedMetalAlbedoData);
+        var sampler = new Sampler(FilterType.Linear, FilterType.Linear, "simple_sampler", _glApi);
+        var texture = new Texture(sandedMetalAlbedo, "sanded_metal", sampler, _glApi);
         
-        var meshManager = new MeshManager(_gl);
-        var materialManager = new MaterialManager(_gl);
-        var renderer = new Renderer(_gl);
+        var meshManager = new MeshManager(_glApi);
+        var materialManager = new MaterialManager(_glApi);
+        var renderer = new Renderer(_glApi);
         
-        var debugUi = new DebugUi(_window, _gl);
+        var debugUi = new DebugUi(_window, _glApi);
         bool debugMode = false;
         
         var scene = new Scene(
@@ -120,7 +149,8 @@ public static class Program
             materialManager: materialManager,
             camera: new Camera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY,
                 MathF.PI / 4.0f,
-                _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f)
+                _window.RenderWidth, _window.RenderHeight, 0.1f, 1000.0f),
+            theOneTexture: texture
         );
         
         var materialKeyRed = materialManager.Add(new MaterialData(
@@ -196,7 +226,7 @@ public static class Program
         
         while (_running)
         {
-            _gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            _glApi.Gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             
             _window.PumpEvent();
 
@@ -218,6 +248,10 @@ public static class Program
         materialManager.Dispose();
         meshManager.Dispose();
 
+        texture.Dispose();
+        sampler.Dispose();
+        resourceLoader.Dispose();
+        
         _window.Dispose();
     }
     
