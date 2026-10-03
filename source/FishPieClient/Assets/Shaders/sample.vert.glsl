@@ -2,6 +2,7 @@
 
 struct VertexData {
     float position[3];
+    float uv[2];
 };
 
 struct ObjectData {
@@ -30,7 +31,7 @@ layout(binding = 3, std430) readonly buffer materials {
     MaterialData material_data[];
 };
 
-vec3 get_position(int index) {
+vec3 get_position(uint index) {
     return vec3(
         data[index].position[0],
         data[index].position[1],
@@ -38,9 +39,18 @@ vec3 get_position(int index) {
     );
 }
 
+vec2 get_uv(uint index) {
+    return vec2(
+        data[index].uv[0],
+        data[index].uv[1]
+    );
+}
+
 layout(location = 0) flat out uint material_id;
+layout(location = 1) out vec2 uv;
 
 void main(void) {
     gl_Position = projection * view * object_data[gl_DrawID].model * vec4(get_position(gl_VertexID), 1.0);
     material_id = object_data[gl_DrawID].index;
+    uv = get_uv(gl_VertexID);
 }

@@ -1,4 +1,5 @@
 #version 460 core
+#extension GL_ARB_bindless_texture : require
 
 struct MaterialData {
     float colour[3];
@@ -17,9 +18,12 @@ vec3 get_colour(uint index) {
 }
 
 layout(location = 0) flat in uint material_id;
+layout(location = 1) in vec2 uv;
 
 layout(location = 0) out vec4 out_colour;
 
+layout(location = 0, bindless_sampler) uniform sampler2D tex;
+
 void main(void) {
-    out_colour = vec4(get_colour(material_id), 1.0);
+    out_colour = vec4(get_colour(material_id) * texture(tex, uv).rgb, 1.0);
 }
