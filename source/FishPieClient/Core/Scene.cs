@@ -1,6 +1,7 @@
 using System.Numerics;
 using FishPieClient.Graphics.Materials;
 using FishPieClient.Graphics.Mesh;
+using FishPieClient.Graphics.Textures;
 using FishPieClient.Maths;
 
 namespace FishPieClient.Core;
@@ -15,12 +16,15 @@ public sealed class Scene : IDisposable
     public MaterialManager MaterialManager { get; }
     
     public Camera Camera { get; }
+    
+    public Texture TheOneTexture { get; }
 
-    public Scene(MeshManager meshManager, MaterialManager materialManager, Camera camera)
+    public Scene(MeshManager meshManager, MaterialManager materialManager, Camera camera, Texture theOneTexture)
     {
         MeshManager = meshManager;
         MaterialManager = materialManager;
         Camera = camera;
+        TheOneTexture = theOneTexture;
     }
 
     public IntersectionResult? IntersectRay(Ray ray)

@@ -6,6 +6,7 @@ using FishPieClient.Graphics.Commands;
 using FishPieClient.Graphics.Data;
 using FishPieClient.Graphics.Shaders;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ARB;
 using Shader = FishPieClient.Graphics.Shaders.Shader;
 
 namespace FishPieClient.Graphics;
@@ -33,12 +34,14 @@ public sealed class Renderer : IDisposable
     private readonly ShaderProgram _program;
     
     private readonly GL _gl;
+    private readonly ArbBindlessTexture _arbBindless;
     
     private MultiBuffer<PersistentBuffer<ObjectData>, ObjectData> _objectDataBuffer;
 
-    public Renderer(GL gl)
+    public Renderer(GlApi api)
     {
-        _gl = gl;
+        _gl = api.Gl;
+        _arbBindless = api.ArbBindless;
 
         _commandBuffer = new CommandBuffer(_gl);
         _cameraBuffer = PersistentBuffer<CameraData>.CreateMultiBuffer(1, "camera_buffer", _gl);
@@ -81,6 +84,8 @@ public sealed class Renderer : IDisposable
 
         scene.MaterialManager.Sync();
         _gl.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 3, scene.MaterialManager.Handle);
+
+        _arbBindless.ProgramUniformHandle(_program.Handle, 0, scene.TheOneTexture.Handle);
         
         _gl.MultiDrawElementsIndirect(
             PrimitiveType.Triangles,
@@ -93,7 +98,7 @@ public sealed class Renderer : IDisposable
         _commandBuffer.Advance();
         _cameraBuffer.Advance();
         _objectDataBuffer.Advance();
-        //scene.MaterialManager.Advance();
+        scene.MaterialManager.Advance();
     }
 
     public void Dispose()
