@@ -1,6 +1,8 @@
 using FishPieClient.Graphics.Buffers;
+using FishPieClient.Graphics.Textures;
 using Serilog;
 using Silk.NET.OpenGL;
+using StbImageSharp;
 
 namespace FishPieClient.Graphics;
 
@@ -47,4 +49,25 @@ public static class Utils
         where T : unmanaged
         => ResizeGpuBuffer<TBuffer, T>((uint)cpuBuffer.Length, gpuBuffer, gl);
 
+    public static TextureData LoadTexture(byte[] textureData)
+    {
+        var image = ImageResult.FromMemory(textureData);
+        return new TextureData(
+            Width: (uint)image.Width,
+            Height: (uint)image.Height,
+            Format: ComponentsToFormat(image.Comp),
+            Data: image.Data
+        );
+
+        static TextureFormat ComponentsToFormat(ColorComponents components)
+        {
+            return components switch
+            {
+                ColorComponents.RedGreenBlueAlpha => TextureFormat.Rgba,
+                ColorComponents.RedGreenBlue => TextureFormat.Rgb,
+                _ => throw new NotSupportedException($"Colour Format {components} is not supported")
+            };
+        }
+    }
+    
 }
